@@ -219,7 +219,7 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
 .confirm-sh p{margin:0 0 20px;font-size:13px;color:var(--tx2);line-height:1.5;font-weight:500}
 .confirm-sh .btns{display:flex;gap:8px}
 .confirm-sh .btn{flex:1}
-.div{height:1px;background:var(--bd);margin:14px 0}
+.div{height:1px;background:var(--bd);margin:14px 0}  /* Сворачиваемые секции */ .sec-h{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:4px 0} .sec-h .sec-t{margin:0;flex:1;pointer-events:none;transition:color .15s} .sec-h:active .sec-t{color:var(--ac)} .sec-arrow{color:var(--tx2);transition:transform .25s;width:18px;height:18px;flex-shrink:0;margin-left:8px} .sec-h.collapsed .sec-arrow{transform:rotate(-90deg)} .sec-body{overflow:hidden;transition:max-height .3s ease-out, opacity .25s ease-out, margin .25s ease-out;max-height:20000px;opacity:1} .sec-body.collapsed{max-height:0!important;opacity:0;margin:0!important;padding:0!important}
 </style>
 </head>
 <body>
@@ -350,14 +350,24 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
 
 <section class="sc" id="sc-set">
   <div style="padding:0 16px">
-    <div class="sec-t" style="margin-top:14px">Участки</div>
-    <div id="plotList"></div>
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <input type="text" id="newPlotNum" placeholder="Номер участка" style="flex:1;height:46px;padding:0 16px;border:1px solid var(--bd);border-radius:12px;font-size:14px;background:#fff;color:var(--tx);outline:none;font-family:inherit;font-weight:500;min-width:0">
-      <button class="btn btn-p btn-ic" id="btnAddPlot"><svg class="ic"><use href="#i-plus"/></svg></button>
+    <div class="sec-h" data-sec="plots" style="margin-top:14px">
+      <div class="sec-t">Участки</div>
+      <svg class="ic sec-arrow"><use href="#i-down"/></svg>
     </div>
-    <div class="sec-t" style="margin-top:28px">Тарифы</div>
-    <div id="tariffBox"></div>
+    <div id="sec-plots-body" class="sec-body">
+      <div id="plotList" style="margin-top:10px"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input type="text" id="newPlotNum" placeholder="Номер участка" style="flex:1;height:46px;padding:0 16px;border:1px solid var(--bd);border-radius:12px;font-size:14px;background:#fff;color:var(--tx);outline:none;font-family:inherit;font-weight:500;min-width:0">
+        <button class="btn btn-p btn-ic" id="btnAddPlot"><svg class="ic"><use href="#i-plus"/></svg></button>
+      </div>
+    </div>
+    <div class="sec-h" data-sec="tariffs" style="margin-top:24px">
+      <div class="sec-t">Тарифы</div>
+      <svg class="ic sec-arrow"><use href="#i-down"/></svg>
+    </div>
+    <div id="sec-tariffs-body" class="sec-body">
+      <div id="tariffBox" style="margin-top:10px"></div>
+    </div>
     <div class="sec-t" style="margin-top:28px">Начальный остаток на счёте</div>
     <div class="cd" style="margin:0 0 12px;padding:14px">
       <div style="font-size:12px;color:var(--tx2);margin-bottom:10px;font-weight:500">Сумма на счёте ДНТ на 1-е число месяца начала учёта</div>
@@ -392,7 +402,7 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
   <button data-sc="sc-list"><svg class="ic"><use href="#i-users"/></svg><span>Участки</span></button>
   <button data-sc="sc-map"><svg class="ic"><use href="#i-map"/></svg><span>Карта</span></button>
   <button data-sc="sc-fin"><svg class="ic"><use href="#i-pie"/></svg><span>Финансы</span></button>
-  <button data-sc="sc-set"><svg class="ic"><use href="#i-set"/></svg><span>Ещё</span></button>
+  <button data-sc="sc-set"><svg class="ic"><use href="#i-set"/></svg><span>Настройки</span></button>
 </nav>
 
 <div class="mdl" id="mEntry"><div class="sh">
@@ -401,6 +411,7 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
   <div id="mEntryInfo"></div>
   <div class="tabs-i" style="margin-bottom:10px">
     <button data-m="reg" class="on">Обычное</button>
+    <button data-m="init">Первое (начальное)</button>
     <button data-m="brk">Замена счётчика</button>
   </div>
   <div class="disp empty" id="disp">0</div>
@@ -536,7 +547,7 @@ function tariffRate(cat,m){const l=S.tariffs[cat].slice().sort((a,b)=>a.from.loc
 function monthsOfYear(y){const a=[];for(let m=1;m<=12;m++)a.push(y+'-'+String(m).padStart(2,'0'));return a}
 function readingsOf(pid){return S.readings.filter(r=>r.plotId===pid).sort((a,b)=>a.date.localeCompare(b.date)||(a.ts||0)-(b.ts||0))}
 function readingOn(pid,d){const a=readingsOf(pid).filter(r=>r.date===d);if(!a.length)return null;return a.find(r=>r.brk)||a[0]}
-function calcCons(prev,cur){const cv=parseFloat(cur.value);if(isNaN(cv))return null;if(cur.brk)return cv;if(!prev)return cv;const pv=parseFloat(prev.value);if(isNaN(pv))return cv;return cv-pv}
+function calcCons(prev,cur){   const cv=parseFloat(cur.value);if(isNaN(cv))return null;   if(cur.init)return 0;   if(cur.brk)return cv;   if(!prev)return 0;   const pv=parseFloat(prev.value);if(isNaN(pv))return 0;   return cv-pv; }
 function elecForMonth(pid,m){const s=m+'-01',e=m+'-31';const all=readingsOf(pid);const inM=all.filter(r=>r.date>=s&&r.date<=e);if(!inM.length)return null;let cons=0,last=null;for(const cur of inM){const idx=all.indexOf(cur);const prev=idx>0?all[idx-1]:null;const c=calcCons(prev,cur);if(c!=null)cons+=c;last=cur}const rate=tariffRate('elec',last.date);return{consumption:cons,charge:cons*rate,rate,lastReading:last}}
 function chargesForMonth(p,m){   if(p.owner==='meter')return{dues:0,trash:0};   const mm=+m.slice(5,7);const dr=tariffRate('dues',m),tr=tariffRate('trash',m);let d=0,t=0;   if(p.owner==='permanent')d=dr;else if(mm>=5&&mm<=10)d=dr;   if(p.trash==='full')t=tr;else if(p.trash==='seasonal'&&mm>=5&&mm<=10)t=tr;   return{dues:d,trash:t}; }
 function paymentsOn(pid,m,cat){const s=m+'-01',e=m+'-31';return S.payments.filter(p=>p.plotId===pid&&p.date>=s&&p.date<=e&&(!cat||p.cat===cat)).reduce((a,p)=>a+parseFloat(p.amount||0),0)}
@@ -587,7 +598,7 @@ function renderList(){
 let entry={plotId:null,value:'',mode:'reg'};
 function openEntry(id){
   const p=S.plots.find(x=>x.id===id);if(!p)return;
-  entry.plotId=id;entry.mode='reg';
+  entry.plotId=id; const existingReadings=readingsOf(id); entry.mode=existingReadings.length===0?'init':'reg';
   const reg=S.readings.find(r=>r.plotId===id&&r.date===S.currentDate&&!r.brk);
   entry.value=reg?String(reg.value):'';
   $('mEntryT').textContent='Участок '+p.num;
@@ -597,29 +608,37 @@ function openEntry(id){
 }
 function updateEntryInfo(){
   const id=entry.plotId;const all=readingsOf(id);const last=all.filter(r=>r.date<S.currentDate).pop();
-  const bal=plotBalance(id);const hasRepl=S.readings.some(r=>r.plotId===id&&r.date===S.currentDate&&r.brk);
+  const bal=plotBalance(id);
+  const hasRepl=S.readings.some(r=>r.plotId===id&&r.date===S.currentDate&&r.brk);
   let h='';
-  if(last)h+=`<div class="info"><svg class="ic"><use href="#i-info"/></svg><div>Предыдущее (${fmtD(last.date)}): <b>${esc(last.value)}</b>${last.brk?' · замена':''}</div></div>`;
+  if(all.length===0){
+    h+=`<div class="info"><svg class="ic"><use href="#i-info"/></svg><div>Это <b>первое показание</b> участка. Оно сохранится как начальная точка — расход по нему не считается. Дальше всё пойдёт как обычно: в следующем месяце расход = новое − предыдущее.</div></div>`;
+  } else if(entry.mode==='init'){
+    h+=`<div class="info"><svg class="ic"><use href="#i-info"/></svg><div>Режим <b>начального показания</b>. Расход по нему = 0, просто точка отсчёта.</div></div>`;
+  } else if(last){
+    h+=`<div class="info"><svg class="ic"><use href="#i-info"/></svg><div>Предыдущее (${fmtD(last.date)}): <b>${esc(last.value)}</b>${last.brk?' · замена':''}${last.init?' · начальное':''}</div></div>`;
+  }
   if(hasRepl)h+=`<div class="info cool"><svg class="ic"><use href="#i-info"/></svg><div>Сегодня уже отмечена замена счётчика</div></div>`;
   h+=`<div style="font-size:12px;color:var(--tx2);margin-bottom:10px;font-weight:500">Баланс за год: <b style="color:${bal>5?'var(--neg)':bal<-5?'var(--pos)':'var(--tx2)'}">${bal>5?'долг':bal<-5?'переплата':'ноль'} ${Math.abs(bal).toFixed(0)} ₽</b></div>`;
   $('mEntryInfo').innerHTML=h;
 }
 function syncEntryTabs(){
   document.querySelectorAll('#mEntry .tabs-i button').forEach(b=>b.classList.toggle('on',b.dataset.m===entry.mode));
-  const r=S.readings.find(x=>x.plotId===entry.plotId&&x.date===S.currentDate&&!!x.brk===(entry.mode==='brk'));
+  const r=S.readings.find(x=>x.plotId===entry.plotId&&x.date===S.currentDate&&!!x.brk===(entry.mode==='brk')&&!!x.init===(entry.mode==='init'));
   entry.value=r?String(r.value):'';updateDisp();
 }
 function updateDisp(){const d=$('disp');if(entry.value===''){d.textContent='0';d.classList.add('empty')}else{d.textContent=entry.value.replace('.',',');d.classList.remove('empty')}}
 function pressK(k){if(k==='back')entry.value=entry.value.slice(0,-1);else if(k==='.'){if(!entry.value.includes('.'))entry.value=(entry.value||'0')+'.'}else{if(entry.value==='0')entry.value='';if(entry.value.length<12)entry.value+=k}updateDisp()}
 function saveEntry(){
   if(entry.value===''){$('mEntry').classList.remove('on');return}
-  const {plotId,value,mode}=entry;const brk=mode==='brk';
-  const idx=S.readings.findIndex(r=>r.plotId===plotId&&r.date===S.currentDate&&!!r.brk===brk);
+  const {plotId,value,mode}=entry;
+  const brk=mode==='brk';const init=mode==='init';
+  const idx=S.readings.findIndex(r=>r.plotId===plotId&&r.date===S.currentDate&&!!r.brk===brk&&!!r.init===init);
   if(idx>=0)S.readings[idx]={...S.readings[idx],value,ts:Date.now()};
-  else S.readings.push({plotId,date:S.currentDate,value,ts:Date.now(),brk:brk||undefined});
-  save();$('mEntry').classList.remove('on');renderList();toast(brk?'Замена зафиксирована':'Сохранено');
+  else S.readings.push({plotId,date:S.currentDate,value,ts:Date.now(),brk:brk||undefined,init:init||undefined});
+  save();$('mEntry').classList.remove('on');renderList();
+  toast(init?'Начальное показание сохранено':brk?'Замена зафиксирована':'Сохранено');
 }
-
 let payPlot=null;
 function openPay(pid){payPlot=pid;const p=S.plots.find(x=>x.id===pid);$('mPayS').textContent='Участок '+p.num;$('payDate').value=S.currentDate;$('paySum').value='';$('payNote').value='';$('mPay').classList.add('on')}
 function savePay(){const a=parseFloat($('paySum').value);if(!a||a<=0){toast('Введите сумму');return}S.payments.push({plotId:payPlot,date:$('payDate').value||todayISO(),amount:a,cat:$('payCat').value,note:$('payNote').value});save();$('mPay').classList.remove('on');renderList();toast('Оплата записана')}
@@ -629,7 +648,7 @@ function openHist(pid){
   $('mHistT').textContent='Участок '+p.num;$('mHistS').textContent='Показания и оплаты';
   const all=readingsOf(pid);const pays=S.payments.filter(x=>x.plotId===pid).sort((a,b)=>b.date.localeCompare(a.date));
   const ev=[];
-  for(let i=0;i<all.length;i++){const r=all[i];const prev=i>0?all[i-1]:null;const c=r.brk?null:calcCons(prev,r);ev.push({t:'r',d:r.date,v:r.value,cons:c,brk:r.brk,ts:r.ts||0})}
+  for(let i=0;i<all.length;i++){const r=all[i];const prev=i>0?all[i-1]:null;const c=r.brk?null:calcCons(prev,r);ev.push({t:'r',d:r.date,v:r.value,cons:c,brk:r.brk,init:r.init,ts:r.ts||0})}
   for(const x of pays)ev.push({t:'p',d:x.date,v:x.amount,cat:x.cat,note:x.note,ts:0});
   ev.sort((a,b)=>b.d.localeCompare(a.d)||b.ts-a.ts);
   if(!ev.length)$('histBody').innerHTML='<div class="emp">Пока пусто</div>';
@@ -1059,7 +1078,29 @@ $('btnSaveOpening').onclick=()=>{S.openingBalance=parseFloat($('openingBal').val
 $('btnReset').onclick=()=>{askConfirm('Удалить все данные?','Все участки, показания, оплаты и операции будут удалены. Это действие необратимо.',()=>{localStorage.removeItem(KEY);S=defaults();save();boot();toast('Все данные удалены')})};
 document.querySelectorAll('.mdl').forEach(m=>m.onclick=e=>{if(e.target===m&&m.id!=='mConfirm')m.classList.remove('on')});
 
+// Сворачиваемые секции в настройках 
+  (function(){
+  const secState=JSON.parse(localStorage.getItem('dnt_sec_state')||'{}');
+  document.querySelectorAll('.sec-h').forEach(h=>{
+    const key=h.dataset.sec;
+    const body=document.getElementById('sec-'+key+'-body');
+    if(!body)return;
+    // По умолчанию всё свёрнуто (чтобы не листать длинный список)
+    const collapsed=secState[key]===undefined?true:secState[key];
+    h.classList.toggle('collapsed',collapsed);
+    body.classList.toggle('collapsed',collapsed);
+    h.onclick=()=>{
+      const nowCollapsed=!h.classList.contains('collapsed');
+      h.classList.toggle('collapsed',nowCollapsed);
+      body.classList.toggle('collapsed',nowCollapsed);
+      secState[key]=nowCollapsed;
+      localStorage.setItem('dnt_sec_state',JSON.stringify(secState));
+    };
+  });
+})();
+
 setupCal();boot();switchSc('sc-dash');
+
 
 // Регистрация Service Worker (для установки как приложение)
 if ('serviceWorker' in navigator) {
