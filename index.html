@@ -440,9 +440,9 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
 <div class="mdl" id="mPlot"><div class="sh">
   <h2 id="mPlotT">Участок</h2>
   <div class="fld"><label>Номер (можно через запятую)</label><input type="text" id="plNum"></div>
-  <div class="fld"><label>Тип владельца</label><select id="plOwner"><option value="dachnik">Дачник (взносы май–октябрь)</option><option value="permanent">ПМЖ (взносы 12 мес.)</option></select></div>
+  <div class="fld"><label>Тип владельца</label><select id="plOwner"><option value="dachnik">Дачник (взносы май–октябрь)</option><option value="permanent">ПМЖ (взносы 12 мес.)</option><option value="meter">Доп. счётчик (без взносов и мусора)</option></select></div>
   <div class="fld"><label>Мусор</label><select id="plTrash"><option value="full">Полный (12 мес.)</option><option value="seasonal">Сезонный (май–окт.)</option><option value="none">Не пользуется</option></select></div>
-  <div class="fld"><label>Заметка</label><input type="text" id="plNote" placeholder="необязательно"></div>
+  <div class="fld"><label>Старый долг на начало учёта, ₽</label><input type="number" id="plDebt" inputmode="decimal" placeholder="0"><div style="font-size:11px;color:var(--tx2);margin-top:4px;font-weight:500">Долг за прошлые периоды (электро, взносы, мусор)</div></div> <div class="fld"><label>Заметка</label><input type="text" id="plNote" placeholder="необязательно"></div>
   <div style="display:flex;gap:8px;margin-top:14px">
     <button class="btn btn-d" style="flex:1" id="btnPlDel">Удалить</button>
     <button class="btn btn-p" style="flex:1.6" id="btnPlS">Сохранить</button>
@@ -489,7 +489,7 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
   <h2>Новый участок</h2>
   <div class="sub">Добавится в конец списка обхода</div>
   <div class="fld"><label>Номер участка</label><input type="text" id="qaNum" placeholder="Например: 42 или 96-100"></div>
-  <div class="fld"><label>Тип владельца</label><select id="qaOwner"><option value="dachnik">Дачник (взносы май–октябрь)</option><option value="permanent">ПМЖ (взносы 12 мес.)</option></select></div>
+  <div class="fld"><label>Тип владельца</label><select id="qaOwner"><option value="dachnik">Дачник (взносы май–октябрь)</option><option value="permanent">ПМЖ (взносы 12 мес.)</option><option value="meter">Доп. счётчик (без взносов и мусора)</option></select></div>
   <div class="fld"><label>Мусор</label><select id="qaTrash"><option value="full">Полный (12 мес.)</option><option value="seasonal">Сезонный (май–окт.)</option><option value="none">Не пользуется</option></select></div>
   <div style="display:flex;gap:8px;margin-top:14px">
     <button class="btn btn-s" style="flex:1" id="btnQaC">Отмена</button>
@@ -538,9 +538,23 @@ function readingsOf(pid){return S.readings.filter(r=>r.plotId===pid).sort((a,b)=
 function readingOn(pid,d){const a=readingsOf(pid).filter(r=>r.date===d);if(!a.length)return null;return a.find(r=>r.brk)||a[0]}
 function calcCons(prev,cur){const cv=parseFloat(cur.value);if(isNaN(cv))return null;if(cur.brk)return cv;if(!prev)return cv;const pv=parseFloat(prev.value);if(isNaN(pv))return cv;return cv-pv}
 function elecForMonth(pid,m){const s=m+'-01',e=m+'-31';const all=readingsOf(pid);const inM=all.filter(r=>r.date>=s&&r.date<=e);if(!inM.length)return null;let cons=0,last=null;for(const cur of inM){const idx=all.indexOf(cur);const prev=idx>0?all[idx-1]:null;const c=calcCons(prev,cur);if(c!=null)cons+=c;last=cur}const rate=tariffRate('elec',last.date);return{consumption:cons,charge:cons*rate,rate,lastReading:last}}
-function chargesForMonth(p,m){const mm=+m.slice(5,7);const dr=tariffRate('dues',m),tr=tariffRate('trash',m);let d=0,t=0;if(p.owner==='permanent')d=dr;else if(mm>=5&&mm<=10)d=dr;if(p.trash==='full')t=tr;else if(p.trash==='seasonal'&&mm>=5&&mm<=10)t=tr;return{dues:d,trash:t}}
+function chargesForMonth(p,m){   if(p.owner==='meter')return{dues:0,trash:0};   const mm=+m.slice(5,7);const dr=tariffRate('dues',m),tr=tariffRate('trash',m);let d=0,t=0;   if(p.owner==='permanent')d=dr;else if(mm>=5&&mm<=10)d=dr;   if(p.trash==='full')t=tr;else if(p.trash==='seasonal'&&mm>=5&&mm<=10)t=tr;   return{dues:d,trash:t}; }
 function paymentsOn(pid,m,cat){const s=m+'-01',e=m+'-31';return S.payments.filter(p=>p.plotId===pid&&p.date>=s&&p.date<=e&&(!cat||p.cat===cat)).reduce((a,p)=>a+parseFloat(p.amount||0),0)}
-function plotBalance(pid,year){year=year||S.currentDate.slice(0,4);const p=S.plots.find(x=>x.id===pid);if(!p)return 0;let ch=0;for(const m of monthsOfYear(year)){const e=elecForMonth(pid,m);if(e)ch+=e.charge;const c=chargesForMonth(p,m);ch+=c.dues+c.trash}const pd=S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year).reduce((a,x)=>a+parseFloat(x.amount||0),0);return ch-pd}
+function plotBalance(pid,year){
+  year=year||S.currentDate.slice(0,4);
+  const p=S.plots.find(x=>x.id===pid);if(!p)return 0;
+  let ch=0;
+  const nowMonth=S.currentDate.slice(0,7);
+  const yearNow=S.currentDate.slice(0,4);
+  for(const m of monthsOfYear(year)){
+    if(year>yearNow)break;
+    if(year===yearNow&&m>nowMonth)break;
+    const e=elecForMonth(pid,m);if(e)ch+=e.charge;
+    const c=chargesForMonth(p,m);ch+=c.dues+c.trash;
+  }
+  const pd=S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year).reduce((a,x)=>a+parseFloat(x.amount||0),0);
+  return ch-pd-(p.debtOpening||0);
+}
 function dntBalance(){const inc=S.payments.reduce((a,p)=>a+parseFloat(p.amount||0),0)+S.dntOps.filter(o=>o.kind==='other_income').reduce((a,o)=>a+o.amount,0)+(S.openingBalance||0);const out=S.dntOps.filter(o=>o.kind!=='other_income').reduce((a,o)=>a+o.amount+(o.commission||0),0);return inc-out}
 
 let confirmCb=null;
@@ -562,7 +576,7 @@ function renderList(){
     el.className='pc '+cls;
     el.innerHTML=(hasRepl?'<div class="pc-repl">Замена</div>':'')+
       `<div class="pc-num">${esc(p.num)}</div>`+
-      `<div class="pc-m">${p.owner==='permanent'?'ПМЖ':'Дачник'} · ${p.trash==='none'?'—':p.trash==='seasonal'?'Сезон':'Мусор'}</div>`+
+      `<div class="pc-m">${p.owner==='meter'?'Доп. счётчик':p.owner==='permanent'?'ПМЖ':'Дачник'} · ${p.trash==='none'?'—':p.trash==='seasonal'?'Сезон':'Мусор'}</div>`+
       `<div class="pc-r"><span>Счётчик</span><b>${r?esc(r.value):'—'}</b></div>`+
       `<div class="pc-b ${clsB}">${bal>5?'Долг':bal<-5?'Переплата':'Ноль'} ${Math.abs(bal).toFixed(0)} ₽</div>`;
     el.onclick=()=>openEntry(p.id);
@@ -633,7 +647,7 @@ function renderPlotList(){
   b.innerHTML='';
   S.plots.forEach((p,i)=>{
     const r=document.createElement('div');r.className='row';
-    const ownerBdg=p.owner==='permanent'?'<span class="bdg warm">ПМЖ</span>':'<span class="bdg cool">Дачник</span>';
+    const ownerBdg=p.owner==='meter'?'<span class="bdg mute">Доп. счётчик</span>':p.owner==='permanent'?'<span class="bdg warm">ПМЖ</span>':'<span class="bdg cool">Дачник</span>';
     const trashBdg=p.trash==='full'?'<span class="bdg warm">Мусор 12м</span>':p.trash==='seasonal'?'<span class="bdg cool">Мусор сезон</span>':'<span class="bdg mute">Без мусора</span>';
     r.innerHTML=`<div class="row-t"><b>${esc(p.num)}</b><small style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${ownerBdg} ${trashBdg}</small></div>
       <div style="display:flex;gap:4px">
@@ -648,7 +662,7 @@ function renderPlotList(){
   b.querySelectorAll('[data-ed]').forEach(x=>x.onclick=()=>openPlotEdit(+x.dataset.ed));
 }
 let editIdx=-1;
-function openPlotEdit(i){editIdx=i;const p=S.plots[i];$('mPlotT').textContent='Участок '+p.num;$('plNum').value=p.num;$('plOwner').value=p.owner||'dachnik';$('plTrash').value=p.trash||'full';$('plNote').value=p.note||'';$('mPlot').classList.add('on')}
+function openPlotEdit(i){editIdx=i;const p=S.plots[i];$('mPlotT').textContent='Участок '+p.num;$('plNum').value=p.num;$('plOwner').value=p.owner||'dachnik';$('plTrash').value=p.trash||'full';$('plNote').value=p.note||'';$('plDebt').value=p.debtOpening||0;$('mPlot').classList.add('on')}
 
 function renderTariffs(){
   const names={elec:'Электроэнергия, ₽/кВт·ч',dues:'Взносы, ₽/мес',trash:'Мусор, ₽/мес'};
@@ -1017,7 +1031,7 @@ $('btnPayC').onclick=()=>$('mPay').classList.remove('on');
 $('btnPayS').onclick=savePay;
 $('btnHistC').onclick=()=>$('mHist').classList.remove('on');
 $('btnAddPlot').onclick=()=>{const n=$('newPlotNum').value.trim();if(!n)return;S.plots.push({id:uid(),num:n,owner:'dachnik',trash:'full'});$('newPlotNum').value='';save();renderPlotList();renderList();toast('Участок добавлен')};
-$('btnPlS').onclick=()=>{if(editIdx<0)return;const p=S.plots[editIdx];p.num=$('plNum').value.trim()||p.num;p.owner=$('plOwner').value;p.trash=$('plTrash').value;p.note=$('plNote').value;save();$('mPlot').classList.remove('on');renderPlotList();renderList()};
+$('btnPlS').onclick=()=>{if(editIdx<0)return;const p=S.plots[editIdx];p.num=$('plNum').value.trim()||p.num;p.owner=$('plOwner').value;p.trash=$('plTrash').value;p.note=$('plNote').value;p.debtOpening=parseFloat($('plDebt').value)||0;save();$('mPlot').classList.remove('on');renderPlotList();renderList()};
 $('btnPlDel').onclick=()=>{if(editIdx<0)return;const id=S.plots[editIdx].id;const num=S.plots[editIdx].num;askConfirm('Удалить участок '+num+'?','Все показания и оплаты по этому участку будут удалены.',()=>{S.plots.splice(editIdx,1);S.readings=S.readings.filter(r=>r.plotId!==id);S.payments=S.payments.filter(p=>p.plotId!==id);delete S.map.hotspots[id];save();$('mPlot').classList.remove('on');renderPlotList();renderList();toast('Участок удалён')})};
 $('btnMapUp').onclick=()=>$('mapFile').click();
 $('mapFile').onchange=e=>{
