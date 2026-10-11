@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#F5F5F7">
 <link rel="apple-touch-icon" href="logo.png">
 <link rel="icon" type="image/png" href="logo.png">
+<link rel="manifest" href="manifest.json">
 <title>Финансы ДНТ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1045,6 +1046,13 @@ $('btnReset').onclick=()=>{askConfirm('Удалить все данные?','В�
 document.querySelectorAll('.mdl').forEach(m=>m.onclick=e=>{if(e.target===m&&m.id!=='mConfirm')m.classList.remove('on')});
 
 setupCal();boot();switchSc('sc-dash');
+
+// Регистрация Service Worker (для установки как приложение)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
