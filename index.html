@@ -453,7 +453,10 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
   <div class="fld"><label>Номер (можно через запятую)</label><input type="text" id="plNum"></div>
   <div class="fld"><label>Тип владельца</label><select id="plOwner"><option value="dachnik">Дачник (взносы май–октябрь)</option><option value="permanent">ПМЖ (взносы 12 мес.)</option><option value="meter">Доп. счётчик (без взносов и мусора)</option></select></div>
   <div class="fld"><label>Мусор</label><select id="plTrash"><option value="full">Полный (12 мес.)</option><option value="seasonal">Сезонный (май–окт.)</option><option value="none">Не пользуется</option></select></div>
-  <div class="fld"><label>Старый долг на начало учёта, ₽</label><input type="number" id="plDebt" inputmode="decimal" placeholder="0"><div style="font-size:11px;color:var(--tx2);margin-top:4px;font-weight:500">Долг за прошлые периоды (электро, взносы, мусор)</div></div> <div class="fld"><label>Заметка</label><input type="text" id="plNote" placeholder="необязательно"></div>
+  <div class="info cool" style="margin:0 0 8px"><svg class="ic"><use href="#i-info"/></svg><div>Если у человека была <b>переплата</b> — введите сумму <b>с минусом</b>. Например: <b>−500</b> = переплата 500 ₽. Обычный долг — без минуса.</div></div>
+  <div class="fld"><label>Старый долг по электроэнергии, ₽</label><input type="number" id="plDebtElec" inputmode="decimal" placeholder="0"></div>
+  <div class="fld"><label>Старый долг по взносам, ₽</label><input type="number" id="plDebtDues" inputmode="decimal" placeholder="0"></div>
+  <div class="fld"><label>Старый долг по мусору, ₽</label><input type="number" id="plDebtTrash" inputmode="decimal" placeholder="0"></div> <div class="fld"><label>Заметка</label><input type="text" id="plNote" placeholder="необязательно"></div>
   <div style="display:flex;gap:8px;margin-top:14px">
     <button class="btn btn-d" style="flex:1" id="btnPlDel">Удалить</button>
     <button class="btn btn-p" style="flex:1.6" id="btnPlS">Сохранить</button>
@@ -534,7 +537,7 @@ const fmtD=iso=>iso?iso.split('-').reverse().join('.'):'';
 const MN=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
 const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmtN=n=>{if(n==null||isNaN(n))return '0';return Math.round(n).toLocaleString('ru-RU')};
+const fmtN=n=>{if(n==null||isNaN(n))return '0,00';const v=Math.round(n*100)/100;return v.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})};
 const fmtN2=n=>{if(n==null||isNaN(n))return '0,0';return n.toFixed(1).replace('.',',')};
 function toast(m){const t=$('tst');t.textContent=m;t.classList.add('on');clearTimeout(t._);t._=setTimeout(()=>t.classList.remove('on'),2000)}
 
@@ -564,6 +567,9 @@ function plotBalance(pid,year){
     const c=chargesForMonth(p,m);ch+=c.dues+c.trash;
   }
   const pd=S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year).reduce((a,x)=>a+parseFloat(x.amount||0),0);
+  return ch-pd+(p.debtElec||0)+(p.debtDues||0)+(p.debtTrash||0);
+}
+  const pd=S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year).reduce((a,x)=>a+parseFloat(x.amount||0),0);
   return ch-pd-(p.debtOpening||0);
 }
 function dntBalance(){const inc=S.payments.reduce((a,p)=>a+parseFloat(p.amount||0),0)+S.dntOps.filter(o=>o.kind==='other_income').reduce((a,o)=>a+o.amount,0)+(S.openingBalance||0);const out=S.dntOps.filter(o=>o.kind!=='other_income').reduce((a,o)=>a+o.amount+(o.commission||0),0);return inc-out}
@@ -580,8 +586,8 @@ function renderList(){
   for(const p of S.plots.filter(p=>!q||String(p.num).toLowerCase().includes(q))){
     const r=readingOn(p.id,S.currentDate);
     const bal=plotBalance(p.id);
-    const cls=bal>5?'due':bal<-5?'over':'ok';
-    const clsB=bal>5?'neg':bal<-5?'pos':'neu';
+    const cls=bal>0.005?'due':bal<-0.005?'over':'ok';
+    const clsB=bal>0.005?'neg':bal<-0.005?'pos':'neu';
     const hasRepl=S.readings.some(x=>x.plotId===p.id&&x.date===S.currentDate&&x.brk);
     const el=document.createElement('div');
     el.className='pc '+cls;
@@ -589,7 +595,7 @@ function renderList(){
       `<div class="pc-num">${esc(p.num)}</div>`+
       `<div class="pc-m">${p.owner==='meter'?'Доп. счётчик':p.owner==='permanent'?'ПМЖ':'Дачник'} · ${p.trash==='none'?'—':p.trash==='seasonal'?'Сезон':'Мусор'}</div>`+
       `<div class="pc-r"><span>Счётчик</span><b>${r?esc(r.value):'—'}</b></div>`+
-      `<div class="pc-b ${clsB}">${bal>5?'Долг':bal<-5?'Переплата':'Ноль'} ${Math.abs(bal).toFixed(0)} ₽</div>`;
+      `<div class="pc-b ${clsB}">${bal>0.005?'Долг':bal<-0.005?'Переплата':'Ноль'} ${Math.abs(bal).toFixed(2).replace('.',',')} ₽</div>`;
     el.onclick=()=>openEntry(p.id);
     g.appendChild(el);
   }
@@ -619,7 +625,7 @@ function updateEntryInfo(){
     h+=`<div class="info"><svg class="ic"><use href="#i-info"/></svg><div>Предыдущее (${fmtD(last.date)}): <b>${esc(last.value)}</b>${last.brk?' · замена':''}${last.init?' · начальное':''}</div></div>`;
   }
   if(hasRepl)h+=`<div class="info cool"><svg class="ic"><use href="#i-info"/></svg><div>Сегодня уже отмечена замена счётчика</div></div>`;
-  h+=`<div style="font-size:12px;color:var(--tx2);margin-bottom:10px;font-weight:500">Баланс за год: <b style="color:${bal>5?'var(--neg)':bal<-5?'var(--pos)':'var(--tx2)'}">${bal>5?'долг':bal<-5?'переплата':'ноль'} ${Math.abs(bal).toFixed(0)} ₽</b></div>`;
+  h+=`<div style="font-size:12px;color:var(--tx2);margin-bottom:10px;font-weight:500">Баланс за год: <b style="color:${bal>0.005?'var(--neg)':bal<-0.005?'var(--pos)':'var(--tx2)'}">${bal>0.005?'долг':bal<-0.005?'переплата':'ноль'} ${Math.abs(bal).toFixed(2).replace('.',',')} ₽</b></div>`;
   $('mEntryInfo').innerHTML=h;
 }
 function syncEntryTabs(){
@@ -681,7 +687,7 @@ function renderPlotList(){
   b.querySelectorAll('[data-ed]').forEach(x=>x.onclick=()=>openPlotEdit(+x.dataset.ed));
 }
 let editIdx=-1;
-function openPlotEdit(i){editIdx=i;const p=S.plots[i];$('mPlotT').textContent='Участок '+p.num;$('plNum').value=p.num;$('plOwner').value=p.owner||'dachnik';$('plTrash').value=p.trash||'full';$('plNote').value=p.note||'';$('plDebt').value=p.debtOpening||0;$('mPlot').classList.add('on')}
+function openPlotEdit(i){editIdx=i;const p=S.plots[i];$('mPlotT').textContent='Участок '+p.num;$('plNum').value=p.num;$('plOwner').value=p.owner||'dachnik';$('plTrash').value=p.trash||'full';$('plNote').value=p.note||'';$('plDebtElec').value=p.debtElec||0;$('plDebtDues').value=p.debtDues||0;$('plDebtTrash').value=p.debtTrash||0;$('mPlot').classList.add('on')}
 
 function renderTariffs(){
   const names={elec:'Электроэнергия, ₽/кВт·ч',dues:'Взносы, ₽/мес',trash:'Мусор, ₽/мес'};
@@ -710,7 +716,7 @@ function renderDash(){
   const inM=S.payments.filter(p=>p.date.slice(0,7)===mNow).reduce((a,p)=>a+parseFloat(p.amount),0);
   const outM=S.dntOps.filter(o=>o.date.slice(0,7)===mNow&&o.kind!=='other_income').reduce((a,o)=>a+o.amount+(o.commission||0),0);
   $('dIn').textContent=fmtN(inM)+' ₽';$('dOut').textContent=fmtN(outM)+' ₽';
-  let debt=0,over=0;for(const p of S.plots){const b=plotBalance(p.id,y);if(b>5)debt+=b;else if(b<-5)over+=-b}
+  let debt=0,over=0;for(const p of S.plots){const b=plotBalance(p.id,y);if(b>0.005)debt+=b;else if(b<-0.005)over+=-b}
   $('dDebt').textContent=fmtN(debt)+' ₽';$('dOver').textContent=fmtN(over)+' ₽';
   const months=[];const now=new Date(S.currentDate);
   for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
@@ -720,7 +726,7 @@ function renderDash(){
   $('chartKwhLbl').innerHTML=months.map(m=>`<span>${MN[+m.slice(5,7)-1]}</span>`).join('');
   let nowK=0,cnt=0;
   for(const p of S.plots){const e=elecForMonth(p.id,mNow);if(e){nowK+=e.consumption;if(e.consumption>0)cnt++}}
-  $('dKwh').textContent=fmtN(nowK);$('dKwhCount').textContent=cnt;$('dKwhTotal').textContent=S.plots.length;
+  $('dKwh').textContent=Math.round(nowK);$('dKwhCount').textContent=cnt;$('dKwhTotal').textContent=S.plots.length;
   const yrK=S.dntOps.filter(o=>o.date.slice(0,4)===y&&o.kind==='elec_bill').reduce((a,o)=>a+(o.kwh||0),0);
   let residentK=0;for(const m of monthsOfYear(y).filter(m=>m<=mNow))for(const p of S.plots){const e=elecForMonth(p.id,m);if(e)residentK+=e.consumption}
   const loss=yrK>0&&residentK>0?((yrK-residentK)/residentK*100):0;
@@ -794,10 +800,10 @@ function finAll(year){
           const c=chargesForMonth(p,m);const e=elecForMonth(p.id,m);
           const ch=(e?e.charge:0)+c.dues+c.trash;const pd=paymentsOn(p.id,m);const b=ch-pd;rt+=b;
           let color='var(--tx2)',bg='transparent';
-          if(b>5){color='#C94B1F';bg='#FCEDE6'}else if(b<-5){color='#5B7A96';bg='#EAEFF3'}
+          if(b>0.005){color='#C94B1F';bg='#FCEDE6'}else if(b<-0.005){color='#5B7A96';bg='#EAEFF3'}
           row+=`<td style="padding:6px 4px;text-align:center;color:${color};background:${bg};font-weight:600;font-variant-numeric:tabular-nums">${b!==0?fmtN(b):'—'}</td>`;
         }
-        row+=`<td style="padding:11px 10px;text-align:center;font-weight:600;color:${rt>5?'#C94B1F':rt<-5?'#5B7A96':'var(--tx2)'};font-variant-numeric:tabular-nums">${fmtN(rt)}</td></tr>`;
+        row+=`<td style="padding:11px 10px;text-align:center;font-weight:600;color:${rt>0.005?'#C94B1F':rt<-0.005?'#5B7A96':'var(--tx2)'};font-variant-numeric:tabular-nums">${fmtN(rt)}</td></tr>`;
         return row;
       }).join('')}</tbody>
     </table>
@@ -818,18 +824,18 @@ function finElec(year){
   return `
   <div class="stat-g" style="padding-top:0">
     <div class="st st-hero ${bal<0?'neg':bal>0?'pos':''}"><div class="st-lbl">Остаток по электроэнергии</div><div class="st-num">${fmtN(bal)} ₽</div><div class="st-sub">Собрано − оплачено в Красэнерго − комиссия</div></div>
-    <div class="st"><div class="st-lbl">кВт·ч по счётчикам</div><div class="st-num ac">${fmtN(totKwh)}</div></div>
+    <div class="st"><div class="st-lbl">кВт·ч по счётчикам</div><div class="st-num ac">${Math.round(totKwh).toLocaleString('ru-RU')}</div></div>
     <div class="st"><div class="st-lbl">Потери</div><div class="st-num ac">${losses>0?'+':''}${losses.toFixed(1)}%</div></div>
   </div>
   <div class="sec"><div class="sec-t">Начислено жителям</div></div>
   <div class="cd">
-    <div class="row"><span style="color:var(--tx2)">По показаниям (${fmtN(totKwh)} кВт·ч)</span><span class="row-v">${fmtN(totCharge)} ₽</span></div>
+    <div class="row"><span style="color:var(--tx2)">По показаниям (${Math.round(totKwh).toLocaleString('ru-RU')} кВт·ч)</span><span class="row-v">${fmtN(totCharge)} ₽</span></div>
     <div class="row"><span style="color:var(--tx2)">Собрано с жителей</span><span class="row-v pos">+${fmtN(totPaid)} ₽</span></div>
   </div>
   <div class="sec"><div class="sec-t">Счета и оплаты Красэнерго</div></div>
   <div class="cd">
     <div class="row"><span style="color:var(--tx2)">Выставлено счётов</span><span class="row-v">${bills.length}</span></div>
-    <div class="row"><span style="color:var(--tx2)">Объём по счетам</span><span class="row-v">${fmtN(billedKwh)} кВт·ч</span></div>
+    <div class="row"><span style="color:var(--tx2)">Объём по счетам</span><span class="row-v">${Math.round(billedKwh).toLocaleString('ru-RU')} кВт·ч</span></div>
     <div class="row"><span style="color:var(--tx2)">Сумма счетов</span><span class="row-v">${fmtN(billedRub)} ₽</span></div>
     <div class="row"><span style="color:var(--tx2)">Оплачено (основная сумма)</span><span class="row-v neg">−${fmtN(paidRub)} ₽</span></div>
     <div class="row"><span style="color:var(--tx2);padding-left:14px">↳ в т.ч. комиссия 1%</span><span class="row-v neg">−${fmtN(commRub)} ₽</span></div>
@@ -1001,8 +1007,8 @@ function exportFin(){
   const bR=S.dntOps.filter(o=>o.date.slice(0,4)===year&&o.kind==='elec_bill').reduce((a,o)=>a+o.amount,0);
   const pR=S.dntOps.filter(o=>o.date.slice(0,4)===year&&o.kind==='elec_pay').reduce((a,o)=>a+o.amount,0);
   const cR=S.dntOps.filter(o=>o.date.slice(0,4)===year&&o.kind==='elec_pay').reduce((a,o)=>a+(o.commission||0),0);
-  csv+=`кВт·ч по счётчикам;${fmtN(tK)}\r\nНачислено жителям;${fmtN(tCh)}\r\nСобрано;${fmtN(tPd)}\r\n`;
-  csv+=`Красэнерго кВт·ч;${fmtN(bK)}\r\nКрасэнерго сумма;${fmtN(bR)}\r\nОплачено;${fmtN(pR)}\r\nКомиссия 1%;${fmtN(cR)}\r\n`;
+  csv+=`кВт·ч по счётчикам;${Math.round(tK)}\r\nНачислено жителям;${fmtN(tCh)}\r\nСобрано;${fmtN(tPd)}\r\n`;
+  csv+=`Красэнерго кВт·ч;${Math.round(bK)}\r\nКрасэнерго сумма;${fmtN(bR)}\r\nОплачено;${fmtN(pR)}\r\nКомиссия 1%;${fmtN(cR)}\r\n`;
   const loss=bK>0&&tK>0?((bK-tK)/tK*100).toFixed(2):'—';
   csv+=`Потери %;${loss}\r\nОстаток;${fmtN(tPd-pR-cR)}\r\n\r\nМУСОР\r\n`;
   let c2=0,p2=0;
@@ -1050,7 +1056,7 @@ $('btnPayC').onclick=()=>$('mPay').classList.remove('on');
 $('btnPayS').onclick=savePay;
 $('btnHistC').onclick=()=>$('mHist').classList.remove('on');
 $('btnAddPlot').onclick=()=>{const n=$('newPlotNum').value.trim();if(!n)return;S.plots.push({id:uid(),num:n,owner:'dachnik',trash:'full'});$('newPlotNum').value='';save();renderPlotList();renderList();toast('Участок добавлен')};
-$('btnPlS').onclick=()=>{if(editIdx<0)return;const p=S.plots[editIdx];p.num=$('plNum').value.trim()||p.num;p.owner=$('plOwner').value;p.trash=$('plTrash').value;p.note=$('plNote').value;p.debtOpening=parseFloat($('plDebt').value)||0;save();$('mPlot').classList.remove('on');renderPlotList();renderList()};
+$('btnPlS').onclick=()=>{   if(editIdx<0)return;   const p=S.plots[editIdx];   p.num=$('plNum').value.trim()||p.num;   p.owner=$('plOwner').value;p.trash=$('plTrash').value;p.note=$('plNote').value;   p.debtElec=parseFloat($('plDebtElec').value)||0;   p.debtDues=parseFloat($('plDebtDues').value)||0;   p.debtTrash=parseFloat($('plDebtTrash').value)||0;   save();$('mPlot').classList.remove('on');renderPlotList();renderList() };
 $('btnPlDel').onclick=()=>{if(editIdx<0)return;const id=S.plots[editIdx].id;const num=S.plots[editIdx].num;askConfirm('Удалить участок '+num+'?','Все показания и оплаты по этому участку будут удалены.',()=>{S.plots.splice(editIdx,1);S.readings=S.readings.filter(r=>r.plotId!==id);S.payments=S.payments.filter(p=>p.plotId!==id);delete S.map.hotspots[id];save();$('mPlot').classList.remove('on');renderPlotList();renderList();toast('Участок удалён')})};
 $('btnMapUp').onclick=()=>$('mapFile').click();
 $('mapFile').onchange=e=>{
