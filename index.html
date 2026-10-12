@@ -31,7 +31,6 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
 .ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;display:block}
 .ic-s{width:15px;height:15px}
 
-/* HEADER */
 .hdr{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.72);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,.06);padding:calc(14px + env(safe-area-inset-top)) 20px 14px}
 .hdr-t{display:flex;align-items:center;gap:12px}
 .hdr-logo{width:44px;height:44px;border-radius:12px;flex-shrink:0;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
@@ -63,7 +62,7 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
 .st-hero.pos{background:linear-gradient(135deg,#F1F4F7 0%,#EAEFF3 100%)}
 .st-lbl{font-size:11px;color:var(--tx2);font-weight:500;letter-spacing:.01em}
 .st-num{font-size:22px;font-weight:600;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums}
-.st-hero .st-num{font-size:34px;font-weight:700;letter-spacing:-.02em}
+.st-hero .st-num{font-size:32px;font-weight:700;letter-spacing:-.02em}
 .st-num.pos{color:var(--pos)}
 .st-num.neg{color:var(--neg)}
 .st-num.ac{color:var(--ac)}
@@ -219,7 +218,15 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
 .confirm-sh p{margin:0 0 20px;font-size:13px;color:var(--tx2);line-height:1.5;font-weight:500}
 .confirm-sh .btns{display:flex;gap:8px}
 .confirm-sh .btn{flex:1}
-.div{height:1px;background:var(--bd);margin:14px 0}  /* Сворачиваемые секции */ .sec-h{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:4px 0} .sec-h .sec-t{margin:0;flex:1;pointer-events:none;transition:color .15s} .sec-h:active .sec-t{color:var(--ac)} .sec-arrow{color:var(--tx2);transition:transform .25s;width:18px;height:18px;flex-shrink:0;margin-left:8px} .sec-h.collapsed .sec-arrow{transform:rotate(-90deg)} .sec-body{overflow:hidden;transition:max-height .3s ease-out, opacity .25s ease-out, margin .25s ease-out;max-height:20000px;opacity:1} .sec-body.collapsed{max-height:0!important;opacity:0;margin:0!important;padding:0!important}
+.div{height:1px;background:var(--bd);margin:14px 0}
+
+.sec-h{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:4px 0}
+.sec-h .sec-t{margin:0;flex:1;pointer-events:none;transition:color .15s}
+.sec-h:active .sec-t{color:var(--ac)}
+.sec-arrow{color:var(--tx2);transition:transform .25s;width:18px;height:18px;flex-shrink:0;margin-left:8px}
+.sec-h.collapsed .sec-arrow{transform:rotate(-90deg)}
+.sec-body{overflow:hidden;transition:max-height .3s ease-out, opacity .25s ease-out, margin .25s ease-out;max-height:20000px;opacity:1}
+.sec-body.collapsed{max-height:0!important;opacity:0;margin:0!important;padding:0!important}
 </style>
 </head>
 <body>
@@ -266,13 +273,9 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
 <div class="hdr">
   <div class="hdr-t">
     <div class="hdr-logo"><img src="logo.png" alt="ДНТ"></div>
-    <div class="hdr-info">
-      <h1>ДНТ Ермолаевское-2<span>Учёт показаний и платежей</span></h1>
-    </div>
+    <div class="hdr-info"><h1>ДНТ Ермолаевское-2<span>Учёт показаний и платежей</span></h1></div>
   </div>
-  <div class="hdr-date">
-    <input type="date" id="dt">
-  </div>
+  <div class="hdr-date"><input type="date" id="dt"></div>
 </div>
 
 <section class="sc on" id="sc-dash">
@@ -361,6 +364,7 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
         <button class="btn btn-p btn-ic" id="btnAddPlot"><svg class="ic"><use href="#i-plus"/></svg></button>
       </div>
     </div>
+
     <div class="sec-h" data-sec="tariffs" style="margin-top:24px">
       <div class="sec-t">Тарифы</div>
       <svg class="ic sec-arrow"><use href="#i-down"/></svg>
@@ -368,6 +372,7 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
     <div id="sec-tariffs-body" class="sec-body">
       <div id="tariffBox" style="margin-top:10px"></div>
     </div>
+
     <div class="sec-t" style="margin-top:28px">Начальный остаток на счёте</div>
     <div class="cd" style="margin:0 0 12px;padding:14px">
       <div style="font-size:12px;color:var(--tx2);margin-bottom:10px;font-weight:500">Сумма на счёте ДНТ на 1-е число месяца начала учёта</div>
@@ -376,6 +381,7 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
         <button class="btn btn-p" id="btnSaveOpening" style="padding:0 14px;flex-shrink:0">Сохранить</button>
       </div>
     </div>
+
     <div class="sec-t" style="margin-top:28px"><svg class="ic ic-s" style="color:var(--ac)"><use href="#i-cloud"/></svg>Яндекс.Диск</div>
     <div class="info"><svg class="ic"><use href="#i-info"/></svg><div>В настройках OAuth-приложения выберите доступ <b>«Папка приложения»</b>. Для приложения нужен только <b>ClientID</b> — Client secret нигде вводить не нужно.</div></div>
     <div class="fld"><label>OAuth-токен</label><input type="text" id="ydToken" placeholder="Вставьте полученный токен"></div>
@@ -383,12 +389,14 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
       <button class="btn btn-s" style="flex:1" id="btnYdUp"><svg class="ic ic-s"><use href="#i-upload"/></svg>В облако</button>
       <button class="btn btn-s" style="flex:1" id="btnYdDown"><svg class="ic ic-s"><use href="#i-download"/></svg>Из облака</button>
     </div>
+
     <div class="sec-t" style="margin-top:28px">Резервные копии</div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-s" style="flex:1" id="btnSaveFile"><svg class="ic ic-s"><use href="#i-save"/></svg>Сохранить</button>
       <button class="btn btn-s" style="flex:1" id="btnLoadFile"><svg class="ic ic-s"><use href="#i-file"/></svg>Загрузить</button>
     </div>
     <input type="file" id="loadFile" accept=".json" style="display:none">
+
     <div class="sec-t" style="margin-top:28px">Опасная зона</div>
     <button class="btn btn-d btn-full" id="btnReset"><svg class="ic ic-s"><use href="#i-trash"/></svg>Удалить все данные</button>
     <div style="height:60px"></div>
@@ -453,10 +461,11 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
   <div class="fld"><label>Номер (можно через запятую)</label><input type="text" id="plNum"></div>
   <div class="fld"><label>Тип владельца</label><select id="plOwner"><option value="dachnik">Дачник (взносы май–октябрь)</option><option value="permanent">ПМЖ (взносы 12 мес.)</option><option value="meter">Доп. счётчик (без взносов и мусора)</option></select></div>
   <div class="fld"><label>Мусор</label><select id="plTrash"><option value="full">Полный (12 мес.)</option><option value="seasonal">Сезонный (май–окт.)</option><option value="none">Не пользуется</option></select></div>
-  <div class="info cool" style="margin:0 0 8px"><svg class="ic"><use href="#i-info"/></svg><div>Если у человека была <b>переплата</b> — введите сумму <b>с минусом</b>. Например: <b>−500</b> = переплата 500 ₽. Обычный долг — без минуса.</div></div>
+  <div class="info cool" style="margin:14px 0 8px"><svg class="ic"><use href="#i-info"/></svg><div>Если у человека была <b>переплата</b> — введите сумму <b>с минусом</b>. Например: <b>−500</b> = переплата 500 ₽. Обычный долг — без минуса.</div></div>
   <div class="fld"><label>Старый долг по электроэнергии, ₽</label><input type="number" id="plDebtElec" inputmode="decimal" placeholder="0"></div>
   <div class="fld"><label>Старый долг по взносам, ₽</label><input type="number" id="plDebtDues" inputmode="decimal" placeholder="0"></div>
-  <div class="fld"><label>Старый долг по мусору, ₽</label><input type="number" id="plDebtTrash" inputmode="decimal" placeholder="0"></div> <div class="fld"><label>Заметка</label><input type="text" id="plNote" placeholder="необязательно"></div>
+  <div class="fld"><label>Старый долг по мусору, ₽</label><input type="number" id="plDebtTrash" inputmode="decimal" placeholder="0"></div>
+  <div class="fld"><label>Заметка</label><input type="text" id="plNote" placeholder="необязательно"></div>
   <div style="display:flex;gap:8px;margin-top:14px">
     <button class="btn btn-d" style="flex:1" id="btnPlDel">Удалить</button>
     <button class="btn btn-p" style="flex:1.6" id="btnPlS">Сохранить</button>
@@ -531,17 +540,18 @@ input,select{font-family:inherit;font-weight:500;letter-spacing:-.005em}
 
 <script>
 const $=id=>document.getElementById(id);
-const KEY='dnt_v7';
+const KEY='dnt_v8';
 const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const fmtD=iso=>iso?iso.split('-').reverse().join('.'):'';
 const MN=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
 const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtN=n=>{if(n==null||isNaN(n))return '0,00';const v=Math.round(n*100)/100;return v.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})};
+const fmtKwh=n=>{if(n==null||isNaN(n))return '0';return Math.round(n).toLocaleString('ru-RU')};
 const fmtN2=n=>{if(n==null||isNaN(n))return '0,0';return n.toFixed(1).replace('.',',')};
 function toast(m){const t=$('tst');t.textContent=m;t.classList.add('on');clearTimeout(t._);t._=setTimeout(()=>t.classList.remove('on'),2000)}
 
-function defaults(){return{v:7,currentDate:todayISO(),openingBalance:0,plots:[],readings:[],payments:[],dntOps:[],tariffs:{elec:[{from:'2024-01-01',rate:4.8}],dues:[{from:'2024-01-01',rate:600}],trash:[{from:'2024-01-01',rate:360}]},map:{img:null,hotspots:{}},cloud:{token:''}}}
+function defaults(){return{v:8,currentDate:todayISO(),openingBalance:0,plots:[],readings:[],payments:[],dntOps:[],tariffs:{elec:[{from:'2024-01-01',rate:4.8}],dues:[{from:'2024-01-01',rate:600}],trash:[{from:'2024-01-01',rate:360}]},map:{img:null,hotspots:{}},cloud:{token:''}}}
 let S=load()||defaults();
 function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){return null}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Ошибка сохранения')}}
@@ -550,9 +560,29 @@ function tariffRate(cat,m){const l=S.tariffs[cat].slice().sort((a,b)=>a.from.loc
 function monthsOfYear(y){const a=[];for(let m=1;m<=12;m++)a.push(y+'-'+String(m).padStart(2,'0'));return a}
 function readingsOf(pid){return S.readings.filter(r=>r.plotId===pid).sort((a,b)=>a.date.localeCompare(b.date)||(a.ts||0)-(b.ts||0))}
 function readingOn(pid,d){const a=readingsOf(pid).filter(r=>r.date===d);if(!a.length)return null;return a.find(r=>r.brk)||a[0]}
-function calcCons(prev,cur){   const cv=parseFloat(cur.value);if(isNaN(cv))return null;   if(cur.init)return 0;   if(cur.brk)return cv;   if(!prev)return 0;   const pv=parseFloat(prev.value);if(isNaN(pv))return 0;   return cv-pv; }
-function elecForMonth(pid,m){const s=m+'-01',e=m+'-31';const all=readingsOf(pid);const inM=all.filter(r=>r.date>=s&&r.date<=e);if(!inM.length)return null;let cons=0,last=null;for(const cur of inM){const idx=all.indexOf(cur);const prev=idx>0?all[idx-1]:null;const c=calcCons(prev,cur);if(c!=null)cons+=c;last=cur}const rate=tariffRate('elec',last.date);return{consumption:cons,charge:cons*rate,rate,lastReading:last}}
-function chargesForMonth(p,m){   if(p.owner==='meter')return{dues:0,trash:0};   const mm=+m.slice(5,7);const dr=tariffRate('dues',m),tr=tariffRate('trash',m);let d=0,t=0;   if(p.owner==='permanent')d=dr;else if(mm>=5&&mm<=10)d=dr;   if(p.trash==='full')t=tr;else if(p.trash==='seasonal'&&mm>=5&&mm<=10)t=tr;   return{dues:d,trash:t}; }
+function calcCons(prev,cur){
+  const cv=parseFloat(cur.value);if(isNaN(cv))return null;
+  if(cur.init)return 0;
+  if(cur.brk)return cv;
+  if(!prev)return 0;
+  const pv=parseFloat(prev.value);if(isNaN(pv))return 0;
+  return cv-pv;
+}
+function elecForMonth(pid,m){
+  const s=m+'-01',e=m+'-31';const all=readingsOf(pid);const inM=all.filter(r=>r.date>=s&&r.date<=e);
+  if(!inM.length)return null;
+  let cons=0,last=null;
+  for(const cur of inM){const idx=all.indexOf(cur);const prev=idx>0?all[idx-1]:null;const c=calcCons(prev,cur);if(c!=null)cons+=c;last=cur}
+  const rate=tariffRate('elec',last.date);
+  return{consumption:cons,charge:cons*rate,rate,lastReading:last};
+}
+function chargesForMonth(p,m){
+  if(p.owner==='meter')return{dues:0,trash:0};
+  const mm=+m.slice(5,7);const dr=tariffRate('dues',m),tr=tariffRate('trash',m);let d=0,t=0;
+  if(p.owner==='permanent')d=dr;else if(mm>=5&&mm<=10)d=dr;
+  if(p.trash==='full')t=tr;else if(p.trash==='seasonal'&&mm>=5&&mm<=10)t=tr;
+  return{dues:d,trash:t};
+}
 function paymentsOn(pid,m,cat){const s=m+'-01',e=m+'-31';return S.payments.filter(p=>p.plotId===pid&&p.date>=s&&p.date<=e&&(!cat||p.cat===cat)).reduce((a,p)=>a+parseFloat(p.amount||0),0)}
 function plotBalance(pid,year){
   year=year||S.currentDate.slice(0,4);
@@ -569,10 +599,11 @@ function plotBalance(pid,year){
   const pd=S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year).reduce((a,x)=>a+parseFloat(x.amount||0),0);
   return ch-pd+(p.debtElec||0)+(p.debtDues||0)+(p.debtTrash||0);
 }
-  const pd=S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year).reduce((a,x)=>a+parseFloat(x.amount||0),0);
-  return ch-pd-(p.debtOpening||0);
+function dntBalance(){
+  const inc=S.payments.reduce((a,p)=>a+parseFloat(p.amount||0),0)+S.dntOps.filter(o=>o.kind==='other_income').reduce((a,o)=>a+o.amount,0)+(S.openingBalance||0);
+  const out=S.dntOps.filter(o=>o.kind!=='other_income').reduce((a,o)=>a+o.amount+(o.commission||0),0);
+  return inc-out;
 }
-function dntBalance(){const inc=S.payments.reduce((a,p)=>a+parseFloat(p.amount||0),0)+S.dntOps.filter(o=>o.kind==='other_income').reduce((a,o)=>a+o.amount,0)+(S.openingBalance||0);const out=S.dntOps.filter(o=>o.kind!=='other_income').reduce((a,o)=>a+o.amount+(o.commission||0),0);return inc-out}
 
 let confirmCb=null;
 function askConfirm(title,text,onYes){$('cfT').textContent=title;$('cfP').textContent=text;confirmCb=onYes;$('mConfirm').classList.add('on')}
@@ -604,8 +635,10 @@ function renderList(){
 let entry={plotId:null,value:'',mode:'reg'};
 function openEntry(id){
   const p=S.plots.find(x=>x.id===id);if(!p)return;
-  entry.plotId=id; const existingReadings=readingsOf(id); entry.mode=existingReadings.length===0?'init':'reg';
-  const reg=S.readings.find(r=>r.plotId===id&&r.date===S.currentDate&&!r.brk);
+  entry.plotId=id;
+  const existingReadings=readingsOf(id);
+  entry.mode=existingReadings.length===0?'init':'reg';
+  const reg=S.readings.find(r=>r.plotId===id&&r.date===S.currentDate&&!r.brk&&!r.init);
   entry.value=reg?String(reg.value):'';
   $('mEntryT').textContent='Участок '+p.num;
   $('mEntryS').textContent='Показания на '+fmtD(S.currentDate);
@@ -645,6 +678,7 @@ function saveEntry(){
   save();$('mEntry').classList.remove('on');renderList();
   toast(init?'Начальное показание сохранено':brk?'Замена зафиксирована':'Сохранено');
 }
+
 let payPlot=null;
 function openPay(pid){payPlot=pid;const p=S.plots.find(x=>x.id===pid);$('mPayS').textContent='Участок '+p.num;$('payDate').value=S.currentDate;$('paySum').value='';$('payNote').value='';$('mPay').classList.add('on')}
 function savePay(){const a=parseFloat($('paySum').value);if(!a||a<=0){toast('Введите сумму');return}S.payments.push({plotId:payPlot,date:$('payDate').value||todayISO(),amount:a,cat:$('payCat').value,note:$('payNote').value});save();$('mPay').classList.remove('on');renderList();toast('Оплата записана')}
@@ -654,12 +688,19 @@ function openHist(pid){
   $('mHistT').textContent='Участок '+p.num;$('mHistS').textContent='Показания и оплаты';
   const all=readingsOf(pid);const pays=S.payments.filter(x=>x.plotId===pid).sort((a,b)=>b.date.localeCompare(a.date));
   const ev=[];
-  for(let i=0;i<all.length;i++){const r=all[i];const prev=i>0?all[i-1]:null;const c=r.brk?null:calcCons(prev,r);ev.push({t:'r',d:r.date,v:r.value,cons:c,brk:r.brk,init:r.init,ts:r.ts||0})}
+  for(let i=0;i<all.length;i++){const r=all[i];const prev=i>0?all[i-1]:null;const c=r.brk||r.init?null:calcCons(prev,r);ev.push({t:'r',d:r.date,v:r.value,cons:c,brk:r.brk,init:r.init,ts:r.ts||0})}
   for(const x of pays)ev.push({t:'p',d:x.date,v:x.amount,cat:x.cat,note:x.note,ts:0});
   ev.sort((a,b)=>b.d.localeCompare(a.d)||b.ts-a.ts);
   if(!ev.length)$('histBody').innerHTML='<div class="emp">Пока пусто</div>';
   else $('histBody').innerHTML=ev.map(e=>{
-    if(e.t==='r'){let s='';if(e.brk)s='Замена счётчика (отсчёт с нуля)';else if(e.cons!=null&&e.cons!==0)s='Расход: '+fmtN2(e.cons)+' кВт·ч';return `<div class="row"><div class="row-t"><b>${fmtD(e.d)}</b><small>${s}</small></div><span class="row-v">${esc(e.v)}</span></div>`}
+    if(e.t==='r'){
+      let s='';
+      if(e.brk)s='Замена счётчика (отсчёт с нуля)';
+      else if(e.init)s='Начальное показание (точка отсчёта)';
+      else if(e.cons!=null&&e.cons>0)s='Расход: '+fmtN2(e.cons)+' кВт·ч';
+      else if(e.cons===0)s='Расход не изменился';
+      return `<div class="row"><div class="row-t"><b>${fmtD(e.d)}</b><small>${s}</small></div><span class="row-v">${esc(e.v)}</span></div>`;
+    }
     const catName={elec:'Электро',dues:'Взносы',trash:'Мусор',other:'Прочее'};
     return `<div class="row"><div class="row-t"><b>${fmtD(e.d)} · ${catName[e.cat]||'Оплата'}</b><small>${esc(e.note||'Оплата')}</small></div><span class="row-v pos">+${fmtN(e.v)} ₽</span></div>`;
   }).join('');
@@ -687,7 +728,18 @@ function renderPlotList(){
   b.querySelectorAll('[data-ed]').forEach(x=>x.onclick=()=>openPlotEdit(+x.dataset.ed));
 }
 let editIdx=-1;
-function openPlotEdit(i){editIdx=i;const p=S.plots[i];$('mPlotT').textContent='Участок '+p.num;$('plNum').value=p.num;$('plOwner').value=p.owner||'dachnik';$('plTrash').value=p.trash||'full';$('plNote').value=p.note||'';$('plDebtElec').value=p.debtElec||0;$('plDebtDues').value=p.debtDues||0;$('plDebtTrash').value=p.debtTrash||0;$('mPlot').classList.add('on')}
+function openPlotEdit(i){
+  editIdx=i;const p=S.plots[i];
+  $('mPlotT').textContent='Участок '+p.num;
+  $('plNum').value=p.num;
+  $('plOwner').value=p.owner||'dachnik';
+  $('plTrash').value=p.trash||'full';
+  $('plNote').value=p.note||'';
+  $('plDebtElec').value=p.debtElec||0;
+  $('plDebtDues').value=p.debtDues||0;
+  $('plDebtTrash').value=p.debtTrash||0;
+  $('mPlot').classList.add('on');
+}
 
 function renderTariffs(){
   const names={elec:'Электроэнергия, ₽/кВт·ч',dues:'Взносы, ₽/мес',trash:'Мусор, ₽/мес'};
@@ -726,7 +778,7 @@ function renderDash(){
   $('chartKwhLbl').innerHTML=months.map(m=>`<span>${MN[+m.slice(5,7)-1]}</span>`).join('');
   let nowK=0,cnt=0;
   for(const p of S.plots){const e=elecForMonth(p.id,mNow);if(e){nowK+=e.consumption;if(e.consumption>0)cnt++}}
-  $('dKwh').textContent=Math.round(nowK);$('dKwhCount').textContent=cnt;$('dKwhTotal').textContent=S.plots.length;
+  $('dKwh').textContent=fmtKwh(nowK);$('dKwhCount').textContent=cnt;$('dKwhTotal').textContent=S.plots.length;
   const yrK=S.dntOps.filter(o=>o.date.slice(0,4)===y&&o.kind==='elec_bill').reduce((a,o)=>a+(o.kwh||0),0);
   let residentK=0;for(const m of monthsOfYear(y).filter(m=>m<=mNow))for(const p of S.plots){const e=elecForMonth(p.id,m);if(e)residentK+=e.consumption}
   const loss=yrK>0&&residentK>0?((yrK-residentK)/residentK*100):0;
@@ -801,7 +853,7 @@ function finAll(year){
           const ch=(e?e.charge:0)+c.dues+c.trash;const pd=paymentsOn(p.id,m);const b=ch-pd;rt+=b;
           let color='var(--tx2)',bg='transparent';
           if(b>0.005){color='#C94B1F';bg='#FCEDE6'}else if(b<-0.005){color='#5B7A96';bg='#EAEFF3'}
-          row+=`<td style="padding:6px 4px;text-align:center;color:${color};background:${bg};font-weight:600;font-variant-numeric:tabular-nums">${b!==0?fmtN(b):'—'}</td>`;
+          row+=`<td style="padding:6px 4px;text-align:center;color:${color};background:${bg};font-weight:600;font-variant-numeric:tabular-nums">${Math.abs(b)>0.005?fmtN(b):'—'}</td>`;
         }
         row+=`<td style="padding:11px 10px;text-align:center;font-weight:600;color:${rt>0.005?'#C94B1F':rt<-0.005?'#5B7A96':'var(--tx2)'};font-variant-numeric:tabular-nums">${fmtN(rt)}</td></tr>`;
         return row;
@@ -824,18 +876,18 @@ function finElec(year){
   return `
   <div class="stat-g" style="padding-top:0">
     <div class="st st-hero ${bal<0?'neg':bal>0?'pos':''}"><div class="st-lbl">Остаток по электроэнергии</div><div class="st-num">${fmtN(bal)} ₽</div><div class="st-sub">Собрано − оплачено в Красэнерго − комиссия</div></div>
-    <div class="st"><div class="st-lbl">кВт·ч по счётчикам</div><div class="st-num ac">${Math.round(totKwh).toLocaleString('ru-RU')}</div></div>
+    <div class="st"><div class="st-lbl">кВт·ч по счётчикам</div><div class="st-num ac">${fmtKwh(totKwh)}</div></div>
     <div class="st"><div class="st-lbl">Потери</div><div class="st-num ac">${losses>0?'+':''}${losses.toFixed(1)}%</div></div>
   </div>
   <div class="sec"><div class="sec-t">Начислено жителям</div></div>
   <div class="cd">
-    <div class="row"><span style="color:var(--tx2)">По показаниям (${Math.round(totKwh).toLocaleString('ru-RU')} кВт·ч)</span><span class="row-v">${fmtN(totCharge)} ₽</span></div>
+    <div class="row"><span style="color:var(--tx2)">По показаниям (${fmtKwh(totKwh)} кВт·ч)</span><span class="row-v">${fmtN(totCharge)} ₽</span></div>
     <div class="row"><span style="color:var(--tx2)">Собрано с жителей</span><span class="row-v pos">+${fmtN(totPaid)} ₽</span></div>
   </div>
   <div class="sec"><div class="sec-t">Счета и оплаты Красэнерго</div></div>
   <div class="cd">
     <div class="row"><span style="color:var(--tx2)">Выставлено счётов</span><span class="row-v">${bills.length}</span></div>
-    <div class="row"><span style="color:var(--tx2)">Объём по счетам</span><span class="row-v">${Math.round(billedKwh).toLocaleString('ru-RU')} кВт·ч</span></div>
+    <div class="row"><span style="color:var(--tx2)">Объём по счетам</span><span class="row-v">${fmtKwh(billedKwh)} кВт·ч</span></div>
     <div class="row"><span style="color:var(--tx2)">Сумма счетов</span><span class="row-v">${fmtN(billedRub)} ₽</span></div>
     <div class="row"><span style="color:var(--tx2)">Оплачено (основная сумма)</span><span class="row-v neg">−${fmtN(paidRub)} ₽</span></div>
     <div class="row"><span style="color:var(--tx2);padding-left:14px">↳ в т.ч. комиссия 1%</span><span class="row-v neg">−${fmtN(commRub)} ₽</span></div>
@@ -922,7 +974,7 @@ function renderMap(){
   img.onload=()=>{
     for(const pid in S.map.hotspots){
       const h=S.map.hotspots[pid];const p=S.plots.find(x=>x.id===pid);if(!p)continue;
-      const bal=plotBalance(pid);const cls=bal>5?'due':bal<-5?'over':'';
+      const bal=plotBalance(pid);const cls=bal>0.005?'due':bal<-0.005?'over':'';
       const el=document.createElement('div');
       el.className='hs '+cls;el.style.left=h.x+'%';el.style.top=h.y+'%';el.style.width=h.w+'%';el.style.height=h.h+'%';
       el.onclick=()=>openEntry(pid);w.appendChild(el);
@@ -1046,7 +1098,7 @@ $('search').oninput=renderList;
 $('fab').onclick=()=>{$('qaNum').value='';$('qaOwner').value='dachnik';$('qaTrash').value='full';$('mQuickAdd').classList.add('on');setTimeout(()=>$('qaNum').focus(),150)};
 $('btnQaC').onclick=()=>$('mQuickAdd').classList.remove('on');
 $('btnQaS').onclick=()=>{const n=$('qaNum').value.trim();if(!n){toast('Введите номер');return}S.plots.push({id:uid(),num:n,owner:$('qaOwner').value,trash:$('qaTrash').value});save();$('mQuickAdd').classList.remove('on');renderList();toast('Участок добавлен')};
-document.querySelectorAll('#mEntry .tabs-i button').forEach(b=>b.onclick=()=>{entry.mode=b.dataset.m;syncEntryTabs()});
+document.querySelectorAll('#mEntry .tabs-i button').forEach(b=>b.onclick=()=>{entry.mode=b.dataset.m;syncEntryTabs();updateEntryInfo()});
 document.querySelectorAll('.k[data-k]').forEach(b=>b.onclick=()=>pressK(b.dataset.k));
 $('btnClr').onclick=()=>{entry.value='';updateDisp()};
 $('btnSv').onclick=saveEntry;
@@ -1056,7 +1108,16 @@ $('btnPayC').onclick=()=>$('mPay').classList.remove('on');
 $('btnPayS').onclick=savePay;
 $('btnHistC').onclick=()=>$('mHist').classList.remove('on');
 $('btnAddPlot').onclick=()=>{const n=$('newPlotNum').value.trim();if(!n)return;S.plots.push({id:uid(),num:n,owner:'dachnik',trash:'full'});$('newPlotNum').value='';save();renderPlotList();renderList();toast('Участок добавлен')};
-$('btnPlS').onclick=()=>{   if(editIdx<0)return;   const p=S.plots[editIdx];   p.num=$('plNum').value.trim()||p.num;   p.owner=$('plOwner').value;p.trash=$('plTrash').value;p.note=$('plNote').value;   p.debtElec=parseFloat($('plDebtElec').value)||0;   p.debtDues=parseFloat($('plDebtDues').value)||0;   p.debtTrash=parseFloat($('plDebtTrash').value)||0;   save();$('mPlot').classList.remove('on');renderPlotList();renderList() };
+$('btnPlS').onclick=()=>{
+  if(editIdx<0)return;
+  const p=S.plots[editIdx];
+  p.num=$('plNum').value.trim()||p.num;
+  p.owner=$('plOwner').value;p.trash=$('plTrash').value;p.note=$('plNote').value;
+  p.debtElec=parseFloat($('plDebtElec').value)||0;
+  p.debtDues=parseFloat($('plDebtDues').value)||0;
+  p.debtTrash=parseFloat($('plDebtTrash').value)||0;
+  save();$('mPlot').classList.remove('on');renderPlotList();renderList()
+};
 $('btnPlDel').onclick=()=>{if(editIdx<0)return;const id=S.plots[editIdx].id;const num=S.plots[editIdx].num;askConfirm('Удалить участок '+num+'?','Все показания и оплаты по этому участку будут удалены.',()=>{S.plots.splice(editIdx,1);S.readings=S.readings.filter(r=>r.plotId!==id);S.payments=S.payments.filter(p=>p.plotId!==id);delete S.map.hotspots[id];save();$('mPlot').classList.remove('on');renderPlotList();renderList();toast('Участок удалён')})};
 $('btnMapUp').onclick=()=>$('mapFile').click();
 $('mapFile').onchange=e=>{
@@ -1084,14 +1145,13 @@ $('btnSaveOpening').onclick=()=>{S.openingBalance=parseFloat($('openingBal').val
 $('btnReset').onclick=()=>{askConfirm('Удалить все данные?','Все участки, показания, оплаты и операции будут удалены. Это действие необратимо.',()=>{localStorage.removeItem(KEY);S=defaults();save();boot();toast('Все данные удалены')})};
 document.querySelectorAll('.mdl').forEach(m=>m.onclick=e=>{if(e.target===m&&m.id!=='mConfirm')m.classList.remove('on')});
 
-// Сворачиваемые секции в настройках 
-  (function(){
+// Сворачиваемые секции в настройках
+(function(){
   const secState=JSON.parse(localStorage.getItem('dnt_sec_state')||'{}');
   document.querySelectorAll('.sec-h').forEach(h=>{
     const key=h.dataset.sec;
     const body=document.getElementById('sec-'+key+'-body');
     if(!body)return;
-    // По умолчанию всё свёрнуто (чтобы не листать длинный список)
     const collapsed=secState[key]===undefined?true:secState[key];
     h.classList.toggle('collapsed',collapsed);
     body.classList.toggle('collapsed',collapsed);
@@ -1107,8 +1167,7 @@ document.querySelectorAll('.mdl').forEach(m=>m.onclick=e=>{if(e.target===m&&m.id
 
 setupCal();boot();switchSc('sc-dash');
 
-
-// Регистрация Service Worker (для установки как приложение)
+// Регистрация Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
