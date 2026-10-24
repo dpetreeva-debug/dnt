@@ -1,6 +1,5 @@
-// Service Worker для PWA
-const CACHE = 'dnt-v1';
-const ASSETS = ['./', './index.html', './logo.png', './manifest.json'];
+const CACHE = 'dnt-v2';
+const ASSETS = ['./', './index.html', './style.css', './logo.png', './manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
