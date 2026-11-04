@@ -1479,6 +1479,7 @@ function finElec(year){
   </div>
   ${opsHist}
   ${tableHtml}
+  ${targetTableHtml}
     <div class="fin-btn-wrap">
     <button class="btn btn-s btn-full mb-12" onclick="showAllPayments('elec')"><svg class="ic ic-s"><use href="#i-clock"/></svg>Показать все операции</button>
     <button class="btn btn-p btn-full" onclick="openOp('elec_pay')"><svg class="ic ic-s"><use href="#i-plus"/></svg>Записать оплату в Красэнерго</button>
@@ -1614,6 +1615,40 @@ function finDues(year){
       </tr>`;
   }
   tableHtml += '</tbody></table></div>';
+
+  // Отдельная таблица целевых начислений: каждая цель раскрывается по участкам.
+  let targetTableHtml = '';
+  const targetRows = [];
+  for (const t of (S.targets || [])) {
+    const eligible = S.plots.filter(p => targetPlotEligible(p, t.scope || 'all'));
+    const share = eligible.length ? (parseFloat(t.total) || 0) / eligible.length : 0;
+    for (const p of eligible) {
+      const paid = S.payments
+        .filter(x => x.plotId === p.id && x.cat === 'target' && x.targetId === t.id && x.date.slice(0,4) === year)
+        .reduce((sum,x) => sum + (parseFloat(x.amount) || 0), 0);
+      const debt = Math.max(0, share - paid);
+      targetRows.push({t,p,share,paid,debt});
+    }
+  }
+  targetRows.sort((a,b)=>String(a.t.name).localeCompare(String(b.t.name),'ru') || String(a.p.num).localeCompare(String(b.p.num),'ru',{numeric:true}));
+  targetTableHtml = `
+    <div class="sec"><div class="sec-t">Целевые взносы — по участкам</div></div>
+    <div class="table-wrap">
+      <table class="table-fin">
+        <thead><tr>
+          <th>Цель / участок</th>
+          <th class="th-bal">Начислено</th>
+          <th class="th-bal">Оплачено</th>
+          <th class="th-bal">Долг</th>
+        </tr></thead><tbody>
+        ${targetRows.length ? targetRows.map(({t,p,share,paid,debt}) => `
+          <tr class="clickable-row" onclick="openTargetDetail('${t.id}')">
+            <td class="td-plot"><span>${esc(t.name)}</span><small class="text-muted" style="display:block">Участок ${esc(p.num)}</small></td>
+            <td class="td-bal">${fmtN(share)} ₽</td>
+            <td class="td-bal text-pos">${fmtN(paid)} ₽</td>
+            <td class="td-bal ${debt>0.005?'text-neg':'text-muted'}">${fmtN(debt)} ₽</td>
+          </tr>`).join('') : '<tr><td colspan="4" class="fin-detail-empty">Нет целевых начислений за этот год</td></tr>'}
+        </tbody></table></div>`;
 
   return `
   <div class="stat-g fin-stat-top"><div class="st st-hero ${bal<0?'neg':bal>0?'pos':''}"><div class="st-lbl">Взносы: баланс за год</div><div class="st-num">${fmtN(bal)} ₽</div><div class="st-sub">Поступило взносов − начислено</div></div></div>
