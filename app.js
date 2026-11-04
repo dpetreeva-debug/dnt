@@ -1600,6 +1600,55 @@ function finDues(year){
           <th class="th-bal">Баланс</th>
         </tr></thead><tbody>
   `;
+  let targetTableHtml = `
+  <div class="sec">
+    <div class="sec-t">Балансы участков (Целевые взносы)</div>
+  </div>
+
+  <div class="filter-tabs">
+    <button class="${duesFilter==='all'?'on':''}"
+      onclick="setDuesFilter('all', this)">Все</button>
+    <button class="${duesFilter==='dachnik'?'on':''}"
+      onclick="setDuesFilter('dachnik', this)">Дачники</button>
+    <button class="${duesFilter==='permanent'?'on':''}"
+      onclick="setDuesFilter('permanent', this)">ПМЖ</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table-fin">
+      <thead>
+        <tr>
+          <th class="th-plot">Участок</th>
+          <th class="th-bal">Баланс</th>
+        </tr>
+      </thead>
+      <tbody>
+`;
+
+for (const p of S.plots) {
+  if (duesFilter === 'dachnik' && p.owner !== 'dachnik') continue;
+  if (duesFilter === 'permanent' && p.owner !== 'permanent') continue;
+
+  const b = targetPlotDebt(p.id);
+
+  let colorClass = 'text-muted';
+  if (b > 0.005) colorClass = 'text-neg';
+  else if (b < -0.005) colorClass = 'text-pos';
+
+  targetTableHtml += `
+    <tr class="clickable-row"
+        onclick="openHist('${p.id}')">
+      <td class="td-plot">${esc(p.num)}</td>
+      <td class="td-bal ${colorClass}">${fmtN(b)} ₽</td>
+    </tr>
+  `;
+}
+
+targetTableHtml += `
+      </tbody>
+    </table>
+  </div>
+`;
   for (const p of S.plots) {
     if (duesFilter === 'dachnik' && p.owner !== 'dachnik') continue;
     if (duesFilter === 'permanent' && p.owner !== 'permanent') continue;
@@ -1614,68 +1663,6 @@ function finDues(year){
       </tr>`;
   }
   tableHtml += '</tbody></table></div>';
-
-  // Отдельная таблица целевых взносов
-const targetsForYear = (S.targets || [])
-  .filter(t => t.date && t.date.slice(0, 4) === year);
-
-let targetTableHtml = `
-  <div class="sec">
-    <div class="sec-t">Целевые взносы</div>
-  </div>
-  <div class="table-wrap">
-    <table class="table-fin">
-      <thead>
-        <tr>
-          <th class="th-plot">Название цели</th>
-          <th class="th-bal">Начислено</th>
-          <th class="th-bal">Собрано</th>
-          <th class="th-bal">Осталось</th>
-        </tr>
-      </thead>
-      <tbody>
-`;
-
-if (!targetsForYear.length) {
-  targetTableHtml += `
-    <tr>
-      <td colspan="4" class="fin-detail-empty">
-        Нет целевых взносов за этот год
-      </td>
-    </tr>
-  `;
-}
-
-targetsForYear.forEach(t => {
-  const paid = S.payments
-    .filter(p => p.targetId === t.id)
-    .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-
-  const remaining = Math.max(0, t.total - paid);
-
-  targetTableHtml += `
-    <tr class="clickable-row"
-        onclick="openTargetDetail('${t.id}')">
-      <td class="td-plot">
-        ${esc(t.name)}
-        <small class="text-muted" style="display:block">
-          ${fmtD(t.date)} · ${targetScopeName(t.scope || 'all')}
-        </small>
-      </td>
-      <td class="td-bal">${fmtN(t.total)} ₽</td>
-      <td class="td-bal text-pos">${fmtN(paid)} ₽</td>
-      <td class="td-bal ${remaining > 0.005 ? 'text-neg' : 'text-muted'}">
-        ${fmtN(remaining)} ₽
-      </td>
-    </tr>
-  `;
-});
-
-targetTableHtml += `
-      </tbody>
-    </table>
-  </div>
-`;
 
   return `
   <div class="stat-g fin-stat-top"><div class="st st-hero ${bal<0?'neg':bal>0?'pos':''}"><div class="st-lbl">Взносы: баланс за год</div><div class="st-num">${fmtN(bal)} ₽</div><div class="st-sub">Поступило взносов − начислено</div></div></div>
