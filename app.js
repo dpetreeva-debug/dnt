@@ -429,6 +429,9 @@ function openHist(pid){
   }
   const totalCharges = totalDues + totalTrash + totalElec;
   const totalPaid = S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year&&x.cat!=='target').reduce((a,x)=>a+parseFloat(x.amount||0),0);
+  const paidDues = S.payments.filter(x => x.plotId === pid && x.date.slice(0,4) === year && x.cat === 'dues').reduce((a,x) => a + parseFloat(x.amount || 0), 0);
+  const paidTrash = S.payments.filter(x => x.plotId === pid && x.date.slice(0,4) === year && x.cat === 'trash').reduce((a,x) => a + parseFloat(x.amount || 0), 0);
+  const paidElec = S.payments.filter(x => x.plotId === pid && x.date.slice(0,4) === year && x.cat === 'elec').reduce((a,x) => a + parseFloat(x.amount || 0), 0);
   const oldDebts = (p.debtElec||0)+(p.debtDues||0)+(p.debtTrash||0);
   const targetDebt = targetPlotDebt(pid);
   const targetPaid = S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year&&x.cat==='target').reduce((a,x)=>a+parseFloat(x.amount||0),0);
@@ -473,8 +476,16 @@ function openHist(pid){
       </div>
       
       <div class="row calc-row calc-row-gap">
-        <span class="calc-row-lbl">Оплачено (осн.)</span>
-        <span class="row-v text-pos calc-row-val">− ${fmtN(totalPaid)} ₽</span>
+        <span class="calc-row-lbl">Оплачено — взносы</span>
+        <span class="row-v text-pos calc-row-val">− ${fmtN(paidDues)} ₽</span>
+      </div>
+      <div class="row calc-row">
+        <span class="calc-row-lbl">Оплачено — мусор</span>
+        <span class="row-v text-pos calc-row-val">− ${fmtN(paidTrash)} ₽</span>
+      </div>
+      <div class="row calc-row">
+        <span class="calc-row-lbl">Оплачено — электроэнергия</span>
+        <span class="row-v text-pos calc-row-val">− ${fmtN(paidElec)} ₽</span>
       </div>
       <div class="row calc-row">
         <span class="calc-row-lbl">Целевые взносы (долг)</span>
