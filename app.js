@@ -31,17 +31,38 @@ if (S.openingBalance === undefined) S.openingBalance = 0;
 if (S.currentDate === undefined) S.currentDate = todayISO();
 if (!Number.isInteger(S.version) || S.version < 0) S.version = 0;
 
-// Условия участия участка в целевых взносах
+// Единая нормализация признаков участка для статистики и целевых взносов.
+function isPlotConnectedToElec(p){
+  if(!p) return false;
+  const v = p.hasElec;
+  if(v === false || v === 0) return false;
+  if(typeof v === 'string' && ['false','0','no','нет','off'].includes(v.trim().toLowerCase())) return false;
+  return true; // Старые записи без признака считаются подключёнными, как в прежнем приложении.
+}
+function isPlotUsingTrash(p){
+  if(!p) return false;
+  const v = String(p.trash ?? '').trim().toLowerCase();
+  return ['full','seasonal','yes','true','1','да'].includes(v);
+}
+function countablePlots(){
+  return S.plots.filter(p=>p && p.owner!=='meter');
+}
 function targetEligible(p, scope='all'){
   if(!p || p.owner==='meter') return false;
-  if(scope==='elec') return p.hasElec !== false;
-  if(scope==='trash') return p.trash !== 'none';
+  if(scope==='elec') return isPlotConnectedToElec(p);
+  if(scope==='trash') return isPlotUsingTrash(p);
   return true;
 }
-function targetScopeLabel(scope){return scope==='elec'?'Подключённые к электричеству':scope==='trash'?'Пользователи мусорной площадки':'Все участки';}
+function targetScopeLabel(scope){return scope==='elec'?'Электричество':scope==='trash'?'Вывоз мусора':'Все участки';}
 function plotServiceCounts(){
-  const plots=S.plots.filter(p=>p.owner!=='meter');
-  return {total:plots.length, elec:plots.filter(p=>p.hasElec!==false).length, trash:plots.filter(p=>p.trash!=='none').length};
+  const plots=countablePlots();
+  return {total:plots.length, elec:plots.filter(isPlotConnectedToElec).length, trash:plots.filter(isPlotUsingTrash).length};
+}
+function renderPlotServiceStats(){
+  const el=$('plotServiceStats');
+  if(!el) return;
+  const c=plotServiceCounts();
+  el.innerHTML=`<div class="plot-service-stats"><span>Всего участков: <b>${c.total}</b></span><span>Электричество: <b>${c.elec}</b></span><span>Вывоз мусора: <b>${c.trash}</b></span></div>`;
 }
 
 function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){return null}}
@@ -566,6 +587,7 @@ function delHist(idx, type) {
 }
 
 function renderPlotList(){
+  renderPlotServiceStats();
   const b=$('plotList');
   if(!S.plots.length){b.innerHTML='<div class="emp set-list-empty">Пока пусто</div>';return}
   b.innerHTML='';
@@ -639,9 +661,6 @@ function renderTariffs(){
 }
 
 function renderTargets(){
-  const counts=plotServiceCounts();
-  const stats=$('targetPlotStats');
-  if(stats) stats.innerHTML=`<div class="target-stats-grid"><div><b>${counts.total}</b><small>Всего участков</small></div><div><b>${counts.elec}</b><small>Подключено к электричеству</small></div><div><b>${counts.trash}</b><small>Пользуются мусорной площадкой</small></div></div>`;
   const b=$('targetList');b.innerHTML='';
   if(!S.targets.length){ b.innerHTML='<div class="emp set-list-empty" style="padding:14px 0">Пока нет целей</div>'; return; }
   b.innerHTML = S.targets.map(t=>`
