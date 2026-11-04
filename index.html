@@ -198,10 +198,12 @@
       <svg class="ic sec-arrow"><use href="#i-down"/></svg>
     </div>
     <div id="sec-targets-body" class="sec-body hidden">
+      <div id="targetPlotStats" class="target-stats"></div>
       <div id="targetList" class="set-list-wrap"></div>
       <div class="set-add-plot-wrap" style="flex-wrap: wrap;">
         <input type="text" id="newTargetName" class="set-input" placeholder="Название цели" style="width: 100%; flex: none; margin-bottom: 8px;">
-        <input type="number" id="newTargetSum" class="set-input" placeholder="Сумма">
+        <input type="number" id="newTargetSum" class="set-input" placeholder="Общая сумма цели">
+        <select id="newTargetScope" class="set-input" style="width:100%;flex:1 1 100%;"><option value="all">Для всех участков</option><option value="elec">Только подключённые к электричеству</option><option value="trash">Только пользователи мусорной площадки</option></select>
         <button class="btn btn-p btn-ic" id="btnAddTarget"><svg class="ic"><use href="#i-plus"/></svg></button>
       </div>
     </div>
