@@ -31,40 +31,6 @@ if (S.openingBalance === undefined) S.openingBalance = 0;
 if (S.currentDate === undefined) S.currentDate = todayISO();
 if (!Number.isInteger(S.version) || S.version < 0) S.version = 0;
 
-// Единая нормализация признаков участка для статистики и целевых взносов.
-function isPlotConnectedToElec(p){
-  if(!p) return false;
-  const v = p.hasElec;
-  if(v === false || v === 0) return false;
-  if(typeof v === 'string' && ['false','0','no','нет','off'].includes(v.trim().toLowerCase())) return false;
-  return true; // Старые записи без признака считаются подключёнными, как в прежнем приложении.
-}
-function isPlotUsingTrash(p){
-  if(!p) return false;
-  const v = String(p.trash ?? '').trim().toLowerCase();
-  return ['full','seasonal','yes','true','1','да'].includes(v);
-}
-function countablePlots(){
-  return S.plots.filter(p=>p && p.owner!=='meter');
-}
-function targetEligible(p, scope='all'){
-  if(!p || p.owner==='meter') return false;
-  if(scope==='elec') return isPlotConnectedToElec(p);
-  if(scope==='trash') return isPlotUsingTrash(p);
-  return true;
-}
-function targetScopeLabel(scope){return scope==='elec'?'Электричество':scope==='trash'?'Вывоз мусора':'Все участки';}
-function plotServiceCounts(){
-  const plots=countablePlots();
-  return {total:plots.length, elec:plots.filter(isPlotConnectedToElec).length, trash:plots.filter(isPlotUsingTrash).length};
-}
-function renderPlotServiceStats(){
-  const el=$('plotServiceStats');
-  if(!el) return;
-  const c=plotServiceCounts();
-  el.innerHTML=`<div class="plot-service-stats"><span>Всего участков: <b>${c.total}</b></span><span>Электричество: <b>${c.elec}</b></span><span>Вывоз мусора: <b>${c.trash}</b></span></div>`;
-}
-
 function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){return null}}
 
 function getBillingMonth() {
@@ -311,9 +277,11 @@ function updatePayInfo() {
     $('payInfoBox').classList.add('hidden');
     $('payTargetFld').classList.remove('hidden');
     const targetSel = $('payTargetId');
-    const eligibleTargets = S.targets.filter(t => targetEligible(p, t.scope || 'all'));
+    const eligibleTargets = S.targets.filter(t => targetPlotEligible(p, t.scope || 'all'));
+    const previous = targetSel.value;
     targetSel.innerHTML = eligibleTargets.map(t => `<option value="${t.id}">${esc(t.name)} (${fmtN(t.total)} ₽)</option>`).join('');
     if(!eligibleTargets.length) targetSel.innerHTML = '<option value="">Для этого участка нет подходящих целей</option>';
+    else if(eligibleTargets.some(t=>t.id===previous)) targetSel.value=previous;
     return;
   } else {
     $('payTargetFld').classList.add('hidden');
@@ -385,7 +353,14 @@ function savePay(){
   
   const cat = $('payCat').value;
   const targetId = cat === 'target' ? $('payTargetId').value : null;
-  if(cat==='target' && !targetId){toast('Для этого участка нет подходящей цели');return}
+  if(cat==='target'){
+    const target=S.targets.find(t=>t.id===targetId);
+    const plot=S.plots.find(p=>p.id===payPlot);
+    if(!target || !targetPlotEligible(plot,target.scope||'all')){
+      toast('Этот участок не участвует в выбранной цели');
+      return;
+    }
+  }
 
   if (editPayIdx !== null) {
     S.payments[editPayIdx] = {
@@ -586,8 +561,30 @@ function delHist(idx, type) {
   });
 }
 
+function targetPlotEligible(p, scope='all'){
+  if(!p || p.owner==='meter') return false;
+  if(scope==='elec') return p.hasElec === true;
+  if(scope==='trash') return p.trash === 'full' || p.trash === 'seasonal';
+  return true;
+}
+function targetScopeName(scope){
+  return scope==='elec' ? 'Электричество' : scope==='trash' ? 'Вывоз мусора' : 'Все участки';
+}
+function getPlotServiceCounts(){
+  const plots=S.plots.filter(p=>p && p.owner!=='meter');
+  return {total:plots.length,elec:plots.filter(p=>p.hasElec===true).length,trash:plots.filter(p=>p.trash==='full'||p.trash==='seasonal').length};
+}
+function renderPlotServiceCounts(){
+  const el=$('plotServiceCounts');
+  if(!el)return;
+  const c=getPlotServiceCounts();
+  el.innerHTML=`<div class="plot-count-line">Всего участков: <span>${c.total}</span></div>
+    <div class="plot-count-line">Электричество: <span>${c.elec}</span></div>
+    <div class="plot-count-line">Вывоз мусора: <span>${c.trash}</span></div>`;
+}
+
 function renderPlotList(){
-  renderPlotServiceStats();
+  renderPlotServiceCounts();
   const b=$('plotList');
   if(!S.plots.length){b.innerHTML='<div class="emp set-list-empty">Пока пусто</div>';return}
   b.innerHTML='';
@@ -665,7 +662,7 @@ function renderTargets(){
   if(!S.targets.length){ b.innerHTML='<div class="emp set-list-empty" style="padding:14px 0">Пока нет целей</div>'; return; }
   b.innerHTML = S.targets.map(t=>`
     <div class="row">
-      <div class="row-t"><b>${esc(t.name)}</b><small>${fmtD(t.date)} · ${targetScopeLabel(t.scope||'all')} · ${S.plots.filter(p=>targetEligible(p,t.scope||'all')).length} уч.</small></div>
+      <div class="row-t"><b>${esc(t.name)}</b><small>${fmtD(t.date)} · ${targetScopeName(t.scope || 'all')}</small></div>
       <div class="flex items-center gap-4">
         <span class="row-v">${fmtN(t.total)} ₽</span>
         <button class="hist-del" onclick="delTarget('${t.id}')"><svg class="ic ic-s"><use href="#i-trash"/></svg></button>
@@ -1244,7 +1241,7 @@ function openTargetsList() {
     S.targets.forEach(t => {
       const paid = S.payments.filter(p => p.targetId === t.id).reduce((a,p)=>a+parseFloat(p.amount), 0);
       html += `<div class="row clickable-row" onclick="openTargetDetail('${t.id}')">
-        <div class="row-t"><b>${esc(t.name)}</b><small>${targetScopeLabel(t.scope||'all')} · ${S.plots.filter(p=>targetEligible(p,t.scope||'all')).length} уч. · Собрано: ${fmtN(paid)} из ${fmtN(t.total)} ₽</small></div>
+        <div class="row-t"><b>${esc(t.name)}</b><small>Собрано: ${fmtN(paid)} из ${fmtN(t.total)} ₽</small></div>
         <svg class="ic ic-s text-muted"><use href="#i-down"/></svg>
       </div>`;
     });
@@ -1256,30 +1253,27 @@ function openTargetsList() {
 function openTargetDetail(targetId) {
   const t = S.targets.find(x => x.id === targetId);
   if(!t) return;
+  const scope = t.scope || 'all';
   $('mTargetsTitle').textContent = 'Цель: ' + t.name;
-  $('mTargetsSub').textContent = 'Сумма цели: ' + fmtN(t.total) + ' ₽';
-  
-  const activePlots = S.plots.filter(p => targetEligible(p, t.scope || 'all'));
+  const activePlots = S.plots.filter(p => targetPlotEligible(p, scope));
   const perPlot = activePlots.length ? t.total / activePlots.length : 0;
-  $('mTargetsSub').textContent = `${fmtN(t.total)} ₽ · ${targetScopeLabel(t.scope||'all')} · ${activePlots.length} участков · ${fmtN(perPlot)} ₽ на участок`;
-  
+  $('mTargetsSub').textContent = 'Сумма цели: ' + fmtN(t.total) + ' ₽ · ' + targetScopeName(scope) + ' · ' + activePlots.length + ' участков';
   let html = '';
+  if(!activePlots.length) html='<div class="emp">Нет участков, подходящих под условие этой цели</div>';
   activePlots.forEach(p => {
-    const paid = S.payments.filter(x => x.targetId === t.id && x.plotId === p.id).reduce((a,x)=>a+parseFloat(x.amount), 0);
+    const paid = S.payments.filter(x => x.targetId === t.id && x.plotId === p.id).reduce((a,x)=>a+parseFloat(x.amount||0), 0);
     const remaining = perPlot - paid;
     let colorClass = 'text-muted';
     if (remaining > 0.005) colorClass = 'text-neg';
     else if (remaining < -0.005) colorClass = 'text-pos';
-
     html += `<div class="row">
       <span class="text-muted">Участок ${esc(p.num)}</span>
       <div class="flex flex-col items-end">
         <span class="row-v ${colorClass}">${remaining > 0 ? 'Долг ' + fmtN(remaining) : remaining < 0 ? 'Переплата ' + fmtN(-remaining) : 'Оплачено'}</span>
-        <small class="fs-11 text-hint">Оплачено: ${fmtN(paid)} ₽</small>
+        <small class="fs-11 text-hint">Начислено: ${fmtN(perPlot)} ₽ · Оплачено: ${fmtN(paid)} ₽</small>
       </div>
     </div>`;
   });
-  
   $('mTargetsBody').innerHTML = html;
   $('mTargets').classList.add('on');
 }
@@ -1820,14 +1814,13 @@ $('btnPay').onclick=()=>{if(entry.plotId){$('mEntry').classList.remove('on');ope
 $('btnPayC').onclick=()=>{$('mPay').classList.remove('on'); editPayIdx = null;};
 $('btnPayS').onclick=savePay;
 $('btnHistC').onclick=()=>$('mHist').classList.remove('on');
-$('btnAddPlot').onclick=()=>{const n=$('newPlotNum').value.trim();if(!n)return;S.plots.push({id:uid(),num:n,owner:'dachnik',trash:'full',hasElec:true});$('newPlotNum').value='';save();renderPlotList();renderList();renderTargets();toast('Участок добавлен')};
+$('btnAddPlot').onclick=()=>{const n=$('newPlotNum').value.trim();if(!n)return;S.plots.push({id:uid(),num:n,owner:'dachnik',trash:'full',hasElec:true});$('newPlotNum').value='';save();renderPlotList();renderList();toast('Участок добавлен')};
 $('btnAddTarget').onclick=()=>{
   const n=$('newTargetName').value.trim();
   const sum=parseFloat($('newTargetSum').value);
   if(!n||!sum) { toast('Заполните название и сумму'); return; }
-  const scope=$('newTargetScope').value||'all';
-  if(!S.plots.some(p=>targetEligible(p,scope))) { toast('Нет участков, подходящих под это условие'); return; }
-  S.targets.push({id:uid(), name:n, total:sum, date:todayISO(), scope:$('newTargetScope').value||'all'});
+  const scope=$('newTargetScope') ? $('newTargetScope').value : 'all';
+  S.targets.push({id:uid(), name:n, total:sum, date:todayISO(), scope});
   $('newTargetName').value=''; $('newTargetSum').value='';
   save(); renderTargets(); toast('Цель добавлена');
 };
@@ -1858,10 +1851,9 @@ $('btnPlS').onclick=()=>{
   $('mPlot').classList.remove('on');
   renderPlotList();
   renderList();
-  renderMap();
-  renderTargets(); 
+  renderMap(); 
 };
-$('btnPlDel').onclick=()=>{if(editIdx<0)return;const id=S.plots[editIdx].id;const num=S.plots[editIdx].num;askConfirm('Удалить участок '+num+'?','Все показания и оплаты по этому участку будут удалены.',()=>{S.plots.splice(editIdx,1);S.readings=S.readings.filter(r=>r.plotId!==id);S.payments=S.payments.filter(p=>p.plotId!==id);save();$('mPlot').classList.remove('on');renderPlotList();renderList();renderTargets();toast('Участок удалён')})};
+$('btnPlDel').onclick=()=>{if(editIdx<0)return;const id=S.plots[editIdx].id;const num=S.plots[editIdx].num;askConfirm('Удалить участок '+num+'?','Все показания и оплаты по этому участку будут удалены.',()=>{S.plots.splice(editIdx,1);S.readings=S.readings.filter(r=>r.plotId!==id);S.payments=S.payments.filter(p=>p.plotId!==id);save();$('mPlot').classList.remove('on');renderPlotList();renderList();toast('Участок удалён')})};
 $('btnFinExport').onclick=exportFin;
 $('btnFinAdd').onclick=()=>openOp();
 $('finYear').onchange=renderFin;
