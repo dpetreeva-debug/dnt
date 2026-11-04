@@ -1,4 +1,4 @@
-const CACHE = 'dnt-offline-v2';
+const CACHE = 'dnt-offline-v3';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './logo.png', './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png', './map.png', './manifest.json'];
 
 self.addEventListener('install', (event) => {
