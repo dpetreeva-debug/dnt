@@ -1057,7 +1057,17 @@ function showAllPayments(cat) {
     items = items.concat(ops);
   } else if (cat === 'dues') {
     title = 'Взносы';
-    items = S.payments.filter(p => p.date.startsWith(mSelected) && p.cat === 'dues').map(p => ({...p, type: 'pay', amount: p.amount, note: p.note, plotId: p.plotId}));
+    items = S.payments
+      .filter(p => p.date.startsWith(mSelected) && (p.cat === 'dues' || p.cat === 'target'))
+      .map(p => ({
+        ...p,
+        type: 'pay',
+        amount: p.amount,
+        note: p.cat === 'target'
+          ? 'Целевой взнос' + (p.note ? ' · ' + p.note : '')
+          : p.note,
+        plotId: p.plotId
+      }));
   } else if (cat === 'exp') {
     title = 'Расходы';
     items = S.dntOps.filter(o => o.date.startsWith(mSelected) && o.kind === 'expense').map(o => ({...o, type: 'op', amount: -o.amount, note: o.note, plotId: null}));
