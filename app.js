@@ -31,6 +31,19 @@ if (S.openingBalance === undefined) S.openingBalance = 0;
 if (S.currentDate === undefined) S.currentDate = todayISO();
 if (!Number.isInteger(S.version) || S.version < 0) S.version = 0;
 
+// Условия участия участка в целевых взносах
+function targetEligible(p, scope='all'){
+  if(!p || p.owner==='meter') return false;
+  if(scope==='elec') return p.hasElec !== false;
+  if(scope==='trash') return p.trash !== 'none';
+  return true;
+}
+function targetScopeLabel(scope){return scope==='elec'?'Подключённые к электричеству':scope==='trash'?'Пользователи мусорной площадки':'Все участки';}
+function plotServiceCounts(){
+  const plots=S.plots.filter(p=>p.owner!=='meter');
+  return {total:plots.length, elec:plots.filter(p=>p.hasElec!==false).length, trash:plots.filter(p=>p.trash!=='none').length};
+}
+
 function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){return null}}
 
 function getBillingMonth() {
@@ -277,8 +290,9 @@ function updatePayInfo() {
     $('payInfoBox').classList.add('hidden');
     $('payTargetFld').classList.remove('hidden');
     const targetSel = $('payTargetId');
-    targetSel.innerHTML = S.targets.map(t => `<option value="${t.id}">${t.name} (${fmtN(t.total)} ₽)</option>`).join('');
-    if(!S.targets.length) targetSel.innerHTML = '<option value="">Нет целей</option>';
+    const eligibleTargets = S.targets.filter(t => targetEligible(p, t.scope || 'all'));
+    targetSel.innerHTML = eligibleTargets.map(t => `<option value="${t.id}">${esc(t.name)} (${fmtN(t.total)} ₽)</option>`).join('');
+    if(!eligibleTargets.length) targetSel.innerHTML = '<option value="">Для этого участка нет подходящих целей</option>';
     return;
   } else {
     $('payTargetFld').classList.add('hidden');
@@ -350,6 +364,7 @@ function savePay(){
   
   const cat = $('payCat').value;
   const targetId = cat === 'target' ? $('payTargetId').value : null;
+  if(cat==='target' && !targetId){toast('Для этого участка нет подходящей цели');return}
 
   if (editPayIdx !== null) {
     S.payments[editPayIdx] = {
@@ -624,11 +639,14 @@ function renderTariffs(){
 }
 
 function renderTargets(){
+  const counts=plotServiceCounts();
+  const stats=$('targetPlotStats');
+  if(stats) stats.innerHTML=`<div class="target-stats-grid"><div><b>${counts.total}</b><small>Всего участков</small></div><div><b>${counts.elec}</b><small>Подключено к электричеству</small></div><div><b>${counts.trash}</b><small>Пользуются мусорной площадкой</small></div></div>`;
   const b=$('targetList');b.innerHTML='';
   if(!S.targets.length){ b.innerHTML='<div class="emp set-list-empty" style="padding:14px 0">Пока нет целей</div>'; return; }
   b.innerHTML = S.targets.map(t=>`
     <div class="row">
-      <div class="row-t"><b>${esc(t.name)}</b><small>${fmtD(t.date)}</small></div>
+      <div class="row-t"><b>${esc(t.name)}</b><small>${fmtD(t.date)} · ${targetScopeLabel(t.scope||'all')} · ${S.plots.filter(p=>targetEligible(p,t.scope||'all')).length} уч.</small></div>
       <div class="flex items-center gap-4">
         <span class="row-v">${fmtN(t.total)} ₽</span>
         <button class="hist-del" onclick="delTarget('${t.id}')"><svg class="ic ic-s"><use href="#i-trash"/></svg></button>
@@ -1207,7 +1225,7 @@ function openTargetsList() {
     S.targets.forEach(t => {
       const paid = S.payments.filter(p => p.targetId === t.id).reduce((a,p)=>a+parseFloat(p.amount), 0);
       html += `<div class="row clickable-row" onclick="openTargetDetail('${t.id}')">
-        <div class="row-t"><b>${esc(t.name)}</b><small>Собрано: ${fmtN(paid)} из ${fmtN(t.total)} ₽</small></div>
+        <div class="row-t"><b>${esc(t.name)}</b><small>${targetScopeLabel(t.scope||'all')} · ${S.plots.filter(p=>targetEligible(p,t.scope||'all')).length} уч. · Собрано: ${fmtN(paid)} из ${fmtN(t.total)} ₽</small></div>
         <svg class="ic ic-s text-muted"><use href="#i-down"/></svg>
       </div>`;
     });
@@ -1222,8 +1240,9 @@ function openTargetDetail(targetId) {
   $('mTargetsTitle').textContent = 'Цель: ' + t.name;
   $('mTargetsSub').textContent = 'Сумма цели: ' + fmtN(t.total) + ' ₽';
   
-  const activePlots = S.plots.filter(p => p.owner !== 'meter');
+  const activePlots = S.plots.filter(p => targetEligible(p, t.scope || 'all'));
   const perPlot = activePlots.length ? t.total / activePlots.length : 0;
+  $('mTargetsSub').textContent = `${fmtN(t.total)} ₽ · ${targetScopeLabel(t.scope||'all')} · ${activePlots.length} участков · ${fmtN(perPlot)} ₽ на участок`;
   
   let html = '';
   activePlots.forEach(p => {
@@ -1782,12 +1801,14 @@ $('btnPay').onclick=()=>{if(entry.plotId){$('mEntry').classList.remove('on');ope
 $('btnPayC').onclick=()=>{$('mPay').classList.remove('on'); editPayIdx = null;};
 $('btnPayS').onclick=savePay;
 $('btnHistC').onclick=()=>$('mHist').classList.remove('on');
-$('btnAddPlot').onclick=()=>{const n=$('newPlotNum').value.trim();if(!n)return;S.plots.push({id:uid(),num:n,owner:'dachnik',trash:'full',hasElec:true});$('newPlotNum').value='';save();renderPlotList();renderList();toast('Участок добавлен')};
+$('btnAddPlot').onclick=()=>{const n=$('newPlotNum').value.trim();if(!n)return;S.plots.push({id:uid(),num:n,owner:'dachnik',trash:'full',hasElec:true});$('newPlotNum').value='';save();renderPlotList();renderList();renderTargets();toast('Участок добавлен')};
 $('btnAddTarget').onclick=()=>{
   const n=$('newTargetName').value.trim();
   const sum=parseFloat($('newTargetSum').value);
   if(!n||!sum) { toast('Заполните название и сумму'); return; }
-  S.targets.push({id:uid(), name:n, total:sum, date:todayISO()});
+  const scope=$('newTargetScope').value||'all';
+  if(!S.plots.some(p=>targetEligible(p,scope))) { toast('Нет участков, подходящих под это условие'); return; }
+  S.targets.push({id:uid(), name:n, total:sum, date:todayISO(), scope:$('newTargetScope').value||'all'});
   $('newTargetName').value=''; $('newTargetSum').value='';
   save(); renderTargets(); toast('Цель добавлена');
 };
@@ -1818,9 +1839,10 @@ $('btnPlS').onclick=()=>{
   $('mPlot').classList.remove('on');
   renderPlotList();
   renderList();
-  renderMap(); 
+  renderMap();
+  renderTargets(); 
 };
-$('btnPlDel').onclick=()=>{if(editIdx<0)return;const id=S.plots[editIdx].id;const num=S.plots[editIdx].num;askConfirm('Удалить участок '+num+'?','Все показания и оплаты по этому участку будут удалены.',()=>{S.plots.splice(editIdx,1);S.readings=S.readings.filter(r=>r.plotId!==id);S.payments=S.payments.filter(p=>p.plotId!==id);save();$('mPlot').classList.remove('on');renderPlotList();renderList();toast('Участок удалён')})};
+$('btnPlDel').onclick=()=>{if(editIdx<0)return;const id=S.plots[editIdx].id;const num=S.plots[editIdx].num;askConfirm('Удалить участок '+num+'?','Все показания и оплаты по этому участку будут удалены.',()=>{S.plots.splice(editIdx,1);S.readings=S.readings.filter(r=>r.plotId!==id);S.payments=S.payments.filter(p=>p.plotId!==id);save();$('mPlot').classList.remove('on');renderPlotList();renderList();renderTargets();toast('Участок удалён')})};
 $('btnFinExport').onclick=exportFin;
 $('btnFinAdd').onclick=()=>openOp();
 $('finYear').onchange=renderFin;
