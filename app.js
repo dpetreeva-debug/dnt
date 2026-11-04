@@ -102,6 +102,19 @@ function chargesForMonth(p,m){
   return{dues:d,trash:t};
 }
 function paymentsOn(pid,m,cat){const s=m+'-01',e=m+'-31';return S.payments.filter(p=>p.plotId===pid&&p.date>=s&&p.date<=e&&(!cat||p.cat===cat)).reduce((a,p)=>a+parseFloat(p.amount||0),0)}
+function targetPlotDebt(pid){
+  let debt=0;
+  for(const t of (S.targets||[])){
+    const eligible=S.plots.filter(p=>targetPlotEligible(p,t.scope||'all'));
+    if(!eligible.some(p=>p.id===pid)) continue;
+    const share=eligible.length ? (parseFloat(t.total)||0)/eligible.length : 0;
+    const paid=S.payments.filter(x=>x.plotId===pid&&x.cat==='target'&&x.targetId===t.id)
+      .reduce((sum,x)=>sum+(parseFloat(x.amount)||0),0);
+    debt += Math.max(0,share-paid);
+  }
+  return debt;
+}
+
 function plotBalance(pid,year){
   year=year||S.currentDate.slice(0,4);
   const p=S.plots.find(x=>x.id===pid);if(!p)return 0;
@@ -115,7 +128,8 @@ function plotBalance(pid,year){
     const c=chargesForMonth(p,m);ch+=c.dues+c.trash;
   }
   const pd=S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year&&x.cat!=='target').reduce((a,x)=>a+parseFloat(x.amount||0),0);
-  return ch-pd+(p.debtElec||0)+(p.debtDues||0)+(p.debtTrash||0);
+  const targetDebt = targetPlotDebt(pid);
+  return ch-pd+(p.debtElec||0)+(p.debtDues||0)+(p.debtTrash||0)+targetDebt;
 }
 
 function getCategoryBalance(pid, year, cat) {
@@ -416,7 +430,9 @@ function openHist(pid){
   const totalCharges = totalDues + totalTrash + totalElec;
   const totalPaid = S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year&&x.cat!=='target').reduce((a,x)=>a+parseFloat(x.amount||0),0);
   const oldDebts = (p.debtElec||0)+(p.debtDues||0)+(p.debtTrash||0);
-  const bal = totalCharges - totalPaid + oldDebts;
+  const targetDebt = targetPlotDebt(pid);
+  const targetPaid = S.payments.filter(x=>x.plotId===pid&&x.date.slice(0,4)===year&&x.cat==='target').reduce((a,x)=>a+parseFloat(x.amount||0),0);
+  const bal = totalCharges - totalPaid + oldDebts + targetDebt;
   
   const monthNames = months.map(x=>MN[+x.slice(5,7)-1]).join(', ');
   const balColorClass = bal > 0.005 ? 'text-neg' : bal < -0.005 ? 'text-pos' : 'text-main';
@@ -459,6 +475,10 @@ function openHist(pid){
       <div class="row calc-row calc-row-gap">
         <span class="calc-row-lbl">Оплачено (осн.)</span>
         <span class="row-v text-pos calc-row-val">− ${fmtN(totalPaid)} ₽</span>
+      </div>
+      <div class="row calc-row">
+        <span class="calc-row-lbl">Целевые взносы (долг)</span>
+        <span class="row-v calc-row-val ${targetDebt > 0.005 ? 'text-neg' : 'text-main'}">${fmtN(targetDebt)} ₽</span>
       </div>
       <div class="row calc-row">
         <span class="calc-row-lbl">${oldDebts < 0 ? 'Старая переплата' : 'Старые долги'}</span>
